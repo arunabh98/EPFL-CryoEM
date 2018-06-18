@@ -1,0 +1,13 @@
+function numerator = numer_posterior_probability_orientation(f_proj, f_image,...
+    estimated_orientation, given_orientation, projection_parameters,...
+    sigmaNoise, prior_parameters, theta_estimate)
+    
+    max_angle_err = prior_parameters.max_angle_err;
+    max_shift_err = prior_parameters.max_shift_err;
+    
+    p_a = prob_of_proj_given_orientation_and_model(...
+        f_proj, f_image, given_orientation, sigmaNoise, projection_parameters, theta_estimate);
+    p_b = prior_prob_orientation_given_model(...
+        estimated_orientation, given_orientation, max_angle_err, max_shift_err);
+    numerator = p_a*p_b;
+end
