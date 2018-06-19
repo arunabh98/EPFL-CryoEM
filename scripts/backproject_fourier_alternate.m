@@ -1,6 +1,6 @@
 function fourier_radial=backproject_fourier_alternate(f_p, prj_angles)
 	% Resolution of the grid.
-	resolution_grid = 100;
+	resolution_grid = 1000;
 
 	% The entire array of angles. 
 	all_prj_angles = 0:179;

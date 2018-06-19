@@ -17,7 +17,7 @@ resolution_space = 1;
 no_of_iterations = 10;
 mask=ones(size(P));
 n = size(P, 1);
-L_pad = 3032; 
+L_pad = 214; 
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -168,7 +168,7 @@ for q=1:no_of_iterations
 
     % next noise estimate.
     estimated_noise_vector = zeros(projection_length, num_theta);
-    parfor k=1:num_theta
+    for k=1:num_theta
         c_proj = project_fourier_alternate(reconstructed_f_image, correct_theta(k),...
             projection_length);
         f_proj = f_projections(:, k);

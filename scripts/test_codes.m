@@ -17,7 +17,7 @@ resolution_space = 1;
 no_of_iterations = 1;
 mask=ones(size(P));
 n = size(P, 1);
-L_pad = 214; 
+L_pad = 3032; 
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -66,25 +66,25 @@ modified_f_projections = zeros(size(f_projections));
 
 error = 0;
 theta(1) = theta(1);
-for i=1:1
-    c_proj = project_fourier_alternate(fourier_radial,...
-        theta(i), 287);
+for i=1:num_theta
+%     c_proj = project_fourier_alternate(fourier_radial,...
+%         theta(i), 287);
     c_proj_1 = project_fourier_alternate(fourier_radial,...
         first_estimate_theta(i), 287);
 %     disp(size(c_proj, 1));
 %     c_proj(isnan(c_proj)) = complex(0, 0);
 %     disp(c_proj(ceil(size(c_proj, 1)/2) + 1));
     f_proj = f_projections(:, i);
-    disp(norm(c_proj - f_proj));
-    disp(norm(c_proj_1 - f_proj));
-%     error = error + norm(c_proj - f_proj);
-%     modified_f_projections(:, i) = c_proj;
+%     disp(norm(c_proj - f_proj));
+%     disp(norm(c_proj_1 - f_proj));
+    error = error + norm(c_proj_1 - f_proj);
+    modified_f_projections(:, i) = c_proj_1;
 end
 
-% fourier_radial_modified = ...
-%     backproject_fourier_alternate(modified_f_projections, first_estimate_theta);
-% first_estimate_model = Ifft2_2_Img(fourier_radial_modified, L_pad);
-% figure; imshow(first_estimate_model);
-% 
-% error/num_theta
+fourier_radial_modified = ...
+    backproject_fourier_alternate(modified_f_projections, first_estimate_theta);
+first_estimate_model = Ifft2_2_Img(fourier_radial_modified, L_pad);
+figure; imshow(first_estimate_model);
+
+error/num_theta
 

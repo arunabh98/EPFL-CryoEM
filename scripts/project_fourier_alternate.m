@@ -1,6 +1,6 @@
 function projection = project_fourier_alternate(fourier_radial, probe_angle, proj_length)
 	% Resolution of the grid.
-	resolution_grid = 100;
+	resolution_grid = 1000;
 
 	% The entire array of angles. 
 	all_prj_angles = 0:179;
@@ -30,7 +30,7 @@ function projection = project_fourier_alternate(fourier_radial, probe_angle, pro
 
 	projection = zeros(proj_length, 1);
 
-	for i=1:proj_length
+	parfor i=1:proj_length
 		projection(i) = fourier_radial(probe_y(i), probe_x(i));
 	end
 end
