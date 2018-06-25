@@ -10,7 +10,7 @@ sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 0;
 filename = ...
     '../results/bayesian_estimation/error_angles_and_shifts/5_percent_noise/';
-num_theta = 180;
+num_theta = 90;
 max_angle_err = 1;
 max_shift_err = 0;
 resolution_angle = 1;
@@ -27,7 +27,7 @@ theta_to_write = zeros(10, num_theta);
 imwrite(P, strcat(filename, num2str(num_theta), '/original_image.png'));
 
 % Define ground truth angles and take the tomographic projection.
-theta = 0:179;
+theta = 0:2:178;
 [projections, svector] = radon(P, theta);
 
 % The original values.
@@ -162,7 +162,7 @@ for q=1:no_of_iterations
     recons_f_denom_weighted = ...
         weights./conv((recons_f_denom_prior.*weights), w, 'same');
     reconstructed_f_image = ...
-        reconstructed_f_numerator.*recons_f_denom_weighted.*1e5;
+        reconstructed_f_numerator.*recons_f_denom_weighted.*1e6;
     reconstructed_f_image = ...
         reshape(reconstructed_f_image, [output_size, output_size]);
 
