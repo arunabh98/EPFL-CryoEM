@@ -15,10 +15,10 @@ max_angle_err = 1;
 max_shift_err = 0;
 resolution_angle = 1;
 resolution_space = 1;
-no_of_iterations = 10;
+no_of_iterations = 3;
 mask=ones(size(P));
 n = size(P, 1);
-L_pad = 3032; 
+L_pad = 214; 
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -81,6 +81,10 @@ projection_parameters = ...
 figure; imshow(first_estimate_model, []);
 disp(norm(first_estimate_model - P));
 
+% Save the first model.
+imwrite(first_estimate_model, strcat(filename, num2str(num_theta),...
+    '/first_estimate.png'));
+
 % Noise estimate.
 noise_estimate = zeros(projection_length, num_theta);
 parfor k=1:num_theta
@@ -97,6 +101,8 @@ noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1);
 prior_variance = 2*abs(f_image_estimate).^2;
 prior_variance = mean(prior_variance(:));
 
+first_orientation = Orientation(first_estimate_theta, first_estimate_shifts);
+
 % Start the iteration.
 theta_estimate = first_estimate_theta;
 shift_estimate = first_estimate_shifts;
@@ -107,8 +113,8 @@ weights = ones(size(f_image_estimate));
 for q=1:no_of_iterations
     % Calculate probability for each orientation for each projection.
     prob_matrix = calc_prob_for_each_orientation(f_image_estimate,...
-        f_projections, theta_estimate, shift_estimate, noise_estimate,...
-        projection_parameters, prior_parameters);
+        f_projections, theta_estimate, first_estimate_theta, first_estimate_shifts, shift_estimate,...
+        noise_estimate, projection_parameters, prior_parameters);
 
     % Initialize space for correct theta and shifts.
     correct_theta = zeros(size(theta));
@@ -152,7 +158,7 @@ for q=1:no_of_iterations
     recons_f_denom = recons_f_denom(:);
 
     recons_f_denom_prior = recons_f_denom + 1./prior_variance;
-    w = kaiser(size(f_image_estimate, 1), 40);
+    w = kaiser(size(f_image_estimate, 1), 5);
     recons_f_denom_weighted = ...
         weights./conv((recons_f_denom_prior.*weights), w, 'same');
     reconstructed_f_image = ...
@@ -163,6 +169,12 @@ for q=1:no_of_iterations
     reconstructed_image = Ifft2_2_Img(reconstructed_f_image, L_pad);
 
     disp(norm(reconstructed_image - P));
+
+    % Write the image constructed in this reconstruction.
+    imwrite(reconstructed_image, strcat(filename, num2str(num_theta),...
+        '/reconstructed_image_', num2str(q), '.png'));
+
+    % Note the error and update the parameters for the next iteration.
     error_plot(q) = norm(reconstructed_image - P);
     current_image = reconstructed_image;
     weights = recons_f_denom_weighted;

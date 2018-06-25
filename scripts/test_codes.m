@@ -5,7 +5,7 @@ P = phantom(200);
 % P = padarray(P, [3th, 3], 0.0);
 
 % Constants.
-sigmaNoiseFraction = 0.00;
+sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 0;
 filename = ...
     '../results/bayesian_estimation/error_angles_and_shifts/5_percent_noise/';
@@ -17,7 +17,7 @@ resolution_space = 1;
 no_of_iterations = 1;
 mask=ones(size(P));
 n = size(P, 1);
-L_pad = 3032; 
+L_pad = 214; 
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -60,31 +60,37 @@ first_estimate_shifts = original_shifts +...
 fourier_radial  = ...
     backproject_fourier_alternate(f_projections, first_estimate_theta);
 first_estimate_model_alternate = Ifft2_2_Img(fourier_radial, L_pad);
-figure; imshow(first_estimate_model_alternate);
+% figure; imshow(first_estimate_model_alternate);
 
 modified_f_projections = zeros(size(f_projections));
 
 error = 0;
 theta(1) = theta(1);
-for i=1:num_theta
+for i=50:50
 %     c_proj = project_fourier_alternate(fourier_radial,...
 %         theta(i), 287);
     c_proj_1 = project_fourier_alternate(fourier_radial,...
         first_estimate_theta(i), 287);
+    c_proj_2 = project_fourier_alternate(fourier_radial,...
+        first_estimate_theta(i) + 1, 287);
+    c_proj_3 = project_fourier_alternate(fourier_radial,...
+        first_estimate_theta(i) - 1, 287);
 %     disp(size(c_proj, 1));
 %     c_proj(isnan(c_proj)) = complex(0, 0);
 %     disp(c_proj(ceil(size(c_proj, 1)/2) + 1));
     f_proj = f_projections(:, i);
 %     disp(norm(c_proj - f_proj));
-%     disp(norm(c_proj_1 - f_proj));
-    error = error + norm(c_proj_1 - f_proj);
-    modified_f_projections(:, i) = c_proj_1;
+    disp(norm(c_proj_1 - f_proj));
+    disp(norm(c_proj_2 - f_proj));
+    disp(norm(c_proj_3 - f_proj));
+    % error = error + norm(c_proj_1 - f_proj);
+    % modified_f_projections(:, i) = c_proj_1;
 end
 
-fourier_radial_modified = ...
-    backproject_fourier_alternate(modified_f_projections, first_estimate_theta);
-first_estimate_model = Ifft2_2_Img(fourier_radial_modified, L_pad);
-figure; imshow(first_estimate_model);
+% fourier_radial_modified = ...
+%     backproject_fourier_alternate(modified_f_projections, first_estimate_theta);
+% first_estimate_model = Ifft2_2_Img(fourier_radial_modified, L_pad);
+% figure; imshow(first_estimate_model);
 
-error/num_theta
+% error/num_theta
 
