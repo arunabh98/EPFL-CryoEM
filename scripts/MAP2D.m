@@ -15,10 +15,10 @@ max_angle_err = 1;
 max_shift_err = 0;
 resolution_angle = 1;
 resolution_space = 1;
-no_of_iterations = 3;
+no_of_iterations = 5;
 mask=ones(size(P));
 n = size(P, 1);
-L_pad = 214; 
+L_pad = 3032; 
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -113,7 +113,8 @@ weights = ones(size(f_image_estimate));
 for q=1:no_of_iterations
     % Calculate probability for each orientation for each projection.
     prob_matrix = calc_prob_for_each_orientation(f_image_estimate,...
-        f_projections, theta_estimate, first_estimate_theta, first_estimate_shifts, shift_estimate,...
+        f_projections, theta_estimate, first_estimate_theta,...
+        first_estimate_shifts, shift_estimate,...
         noise_estimate, projection_parameters, prior_parameters);
 
     % Initialize space for correct theta and shifts.
@@ -131,22 +132,24 @@ for q=1:no_of_iterations
             y*resolution_space - resolution_space - max_shift_err;
     end
 
+    % Divide the projections with the noise variance.
     denoised_f_projections = ...
         bsxfun(@rdivide, f_projections, (noise_estimate.^2));
     normalization_f_denom = ...
         bsxfun(@rdivide, ones(size(f_projections)), (noise_estimate.^2));
 
+    % Initialize the estimates.
     reconstructed_f_numerator = zeros(size(fourier_radial));
     recons_f_denom = zeros(size(fourier_radial));
 
     % Start estimating the image.
-    parfor i=1:size(prob_matrix, 1)
+    for i=1:size(prob_matrix, 1)
         probabilities = squeeze(prob_matrix(i, :, :))';
         prob_f_proj = bsxfun(@mtimes, denoised_f_projections, probabilities);
         prob_f_noise = bsxfun(@mtimes, normalization_f_denom, probabilities);
 
-        current_theta = ...
-            mod(theta_estimate  + i*resolution_angle - resolution_angle - max_angle_err, 180);
+        current_theta = mod(theta_estimate  + i*resolution_angle...
+            - resolution_angle - max_angle_err, 180);
 
         reconstructed_f_numerator = reconstructed_f_numerator +...
             backproject_fourier_alternate(prob_f_proj, current_theta);
@@ -156,18 +159,21 @@ for q=1:no_of_iterations
 
     reconstructed_f_numerator = reconstructed_f_numerator(:);
     recons_f_denom = recons_f_denom(:);
-
+    
+    % Update the weights on the denominator.
     recons_f_denom_prior = recons_f_denom + 1./prior_variance;
-    w = kaiser(size(f_image_estimate, 1), 5);
+    w = kaiser(size(f_image_estimate, 1), 50);
     recons_f_denom_weighted = ...
-        weights./conv((recons_f_denom_prior.*weights), w, 'same');
+        weights./cconv((recons_f_denom_prior.*weights), w, size(f_image_estimate, 1));
     reconstructed_f_image = ...
         reconstructed_f_numerator.*recons_f_denom_weighted.*1e6;
     reconstructed_f_image = ...
         reshape(reconstructed_f_image, [output_size, output_size]);
 
+    % Construct the image for this iteration.
     reconstructed_image = Ifft2_2_Img(reconstructed_f_image, L_pad);
 
+    % Display the error for this iteration.
     disp(norm(reconstructed_image - P));
 
     % Write the image constructed in this reconstruction.
@@ -189,7 +195,7 @@ for q=1:no_of_iterations
     end
     estimated_noise_vector = sqrt(estimated_noise_vector);
     noise_estimate = mean(estimated_noise_vector(:));
-    noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1);
+    noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1)*0.2;
 
     f_image_estimate = reconstructed_f_image(:);
     theta_estimate = correct_theta;
