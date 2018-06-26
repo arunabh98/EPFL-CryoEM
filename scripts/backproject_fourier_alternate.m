@@ -1,9 +1,13 @@
 function fourier_radial=backproject_fourier_alternate(f_p, prj_angles)
 	% Resolution of the grid.
-	resolution_grid = 100;
+	resolution_grid = 1000;
 
 	% The entire array of angles. 
+<<<<<<< HEAD
 	all_prj_angles = 0:0.5:179.5;
+=======
+	all_prj_angles = 0:0.1:179.9;
+>>>>>>> f2725eb5f4b825328060b72867b89871ab484ab9
 
 	% Length of the projections.
 	nfp=length(f_p(:,1));
@@ -36,8 +40,10 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles)
 
 	for j=1:size(prj_angles, 2)
 		for i=1:nfp
-			fourier_radial(probe_y(i, j), probe_x(i, j)) = fourier_radial(probe_y(i, j), probe_x(i, j)) + f_p(i, j);
-			count_matrix(probe_y(i, j), probe_x(i, j)) = count_matrix(probe_y(i, j), probe_x(i, j)) + 1;
+			fourier_radial(probe_y(i, j), probe_x(i, j)) = ...
+                fourier_radial(probe_y(i, j), probe_x(i, j)) + f_p(i, j);
+			count_matrix(probe_y(i, j), probe_x(i, j)) = ...
+                count_matrix(probe_y(i, j), probe_x(i, j)) + 1;
 		end
 	end
 
