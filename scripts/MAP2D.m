@@ -9,20 +9,16 @@ P = phantom(200);
 sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 0;
 filename = ...
-    '../results/bayesian_estimation/error_angles_and_shifts/5_percent_noise/';
+    '../results/bayesian_estimation/error_angles_and_shifts/server/5_percent_noise/';
 num_theta = 90;
 max_angle_err = 1;
 max_shift_err = 0;
 resolution_angle = 1;
 resolution_space = 1;
-<<<<<<< HEAD
-no_of_iterations = 4;
-=======
-no_of_iterations = 5;
->>>>>>> f2725eb5f4b825328060b72867b89871ab484ab9
+no_of_iterations = 10;
 mask=ones(size(P));
 n = size(P, 1);
-L_pad = 3032; 
+L_pad = 214; 
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -170,7 +166,7 @@ for q=1:no_of_iterations
     recons_f_denom_weighted = ...
         weights./cconv((recons_f_denom_prior.*weights), w, size(f_image_estimate, 1));
     reconstructed_f_image = ...
-        reconstructed_f_numerator.*recons_f_denom_weighted.*1e6;
+        reconstructed_f_numerator.*recons_f_denom_weighted.*1e5;
     reconstructed_f_image = ...
         reshape(reconstructed_f_image, [output_size, output_size]);
 
@@ -199,7 +195,7 @@ for q=1:no_of_iterations
     end
     estimated_noise_vector = sqrt(estimated_noise_vector);
     noise_estimate = mean(estimated_noise_vector(:));
-    noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1)*0.2;
+    noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1);
 
     f_image_estimate = reconstructed_f_image(:);
     theta_estimate = correct_theta;
