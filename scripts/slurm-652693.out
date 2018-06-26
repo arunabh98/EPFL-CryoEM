@@ -1,0 +1,39 @@
+STARTING AT Mon Jun 25 21:31:15 CEST 2018
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2016 The MathWorks, Inc.
+                   R2016a (9.0.0.341360) 64-bit (glnxa64)
+                             February 11, 2016
+
+ 
+To get started, type one of these: helpwin, helpdesk, or demo.
+For product information, visit www.mathworks.com.
+ 
+
+	Academic License
+
+MATLAB detected: 28 physical cores.
+MATLAB detected: 28 logical cores.
+MATLAB was assigned: 28 logical cores by the OS.
+MATLAB is using: 28 logical cores.
+
+ans =
+
+    28
+
+   15.5898
+
+Starting parallel pool (parpool) using the 'local' profile ... connected to 12 workers.
+   15.5300
+
+   15.7590
+
+   15.0042
+
+>> processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 79
+model name	: Intel(R) Xeon(R) CPU E5-2690 v4 @ 2.60GHz
+stepping	: 1
+FINISHED at Mon Jun 25 21:34:45 CEST 2018
