@@ -3,7 +3,7 @@ function projection = project_fourier_alternate(fourier_radial, probe_angle, pro
 	resolution_grid = 100;
 
 	% The entire array of angles. 
-	all_prj_angles = 0:179;
+	all_prj_angles = 0:0.5:179.5;
 
 	% Length of the projections.
 	nfp = proj_length;
