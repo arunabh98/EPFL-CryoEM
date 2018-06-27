@@ -1,12 +1,28 @@
-function fourier_radial=backproject_fourier_alternate(f_p, prj_angles)
+function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
+	% Length of the projections.
+	nfp=length(f_p(:,1));
+
+	% Calculate the frequencies in the projection.
+	first_part = (1/(nfp*2):1/nfp:0.5)';
+	second_part = -first_part(1:end-1);
+	frequencies = [first_part; flipud(second_part)];
+
+	% Shift back the projections.
+	parfor i=1:size(f_p, 2)
+	    shift = shifts(i);
+	    if mod(shift, 2) == 0
+	        freq_compensation = exp(1j*2*pi*frequencies*shift);
+	    else
+	        freq_compensation = -exp(1j*2*pi*frequencies*shift);
+	    end
+	    f_p(:, i) = f_p(:, i).*freq_compensation;
+	end
+
 	% Resolution of the grid.
 	resolution_grid = 100;
 
 	% The entire array of angles. 
 	all_prj_angles = 0:0.1:179.9;
-
-	% Length of the projections.
-	nfp=length(f_p(:,1));
 
 	% Create the grid.
 	omega_sino = (-(nfp-1)/2:(nfp-1)/2).*(2*pi/size(f_p,1));

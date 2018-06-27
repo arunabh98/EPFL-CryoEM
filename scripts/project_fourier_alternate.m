@@ -1,4 +1,4 @@
-function projection = project_fourier_alternate(fourier_radial, probe_angle, proj_length)
+function projection = project_fourier_alternate(fourier_radial, probe_angle, shift, proj_length)
 	% Resolution of the grid.
 	resolution_grid = 100;
 
@@ -33,4 +33,17 @@ function projection = project_fourier_alternate(fourier_radial, probe_angle, pro
 	parfor i=1:proj_length
 		projection(i) = fourier_radial(probe_y(i), probe_x(i));
 	end
+
+	% Calculate the frequencies in the projection.
+	first_part = (1/(nfp*2):1/nfp:0.5)';
+	second_part = -first_part(1:end-1);
+	frequencies = [first_part; flipud(second_part)];
+
+	% Shift the projection.
+    if mod(shift, 2) == 0
+        freq_compensation = exp(-1j*2*pi*frequencies*shift);
+    else
+        freq_compensation = -exp(-1j*2*pi*frequencies*shift);
+    end
+    projection = projection.*freq_compensation;
 end
