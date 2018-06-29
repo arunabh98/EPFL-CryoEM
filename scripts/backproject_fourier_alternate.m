@@ -64,5 +64,5 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 		fourier_radial(index_non_nan)./count_matrix(index_non_nan);
 
 	fourier_radial(fourier_radial == 0) = NaN;
-	fourier_radial = inpaint_nans(fourier_radial, 2);
+	fourier_radial = inpaint_nans(fourier_radial, 1);
 end

@@ -1,5 +1,5 @@
 function prob = prob_of_proj_given_orientation_and_model(f_proj, f_image,...
-    orientation, sigmaNoise, projection_parameters, theta_estimate)
+    orientation, sigmaNoise, projection_parameters)
     projection_length = projection_parameters.projection_length;
     output_size = projection_parameters.output_size;
     f_image = reshape(f_image, [output_size, output_size]);
