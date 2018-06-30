@@ -12,13 +12,13 @@ P = padarray(P, [3, 3], 0.0);
 sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 0;
 filename = ...
-    '../results/bayesian_estimation/error_angles_and_shifts/local_epfl/5_percent_noise/';
+    '../results/bayesian_estimation/error_angles_and_shifts/local_personal/5_percent_noise_resolution/';
 num_theta = 360;
 max_angle_err = 5;
-max_shift_err = 5;
+max_shift_err = 0;
 resolution_angle = 1;
 resolution_space = 1;
-no_of_iterations = 1;
+no_of_iterations = 10;
 mask=ones(size(P));
 n = size(P, 1);
 L_pad = 260; 
@@ -63,7 +63,7 @@ f_projections = fftshift(f_projections, 1); % put DC central after filtering
 first_estimate_theta = mod(theta +...
     randi([-max_angle_err + 4, max_angle_err - 4], 1, num_theta), 180);
 first_estimate_shifts = original_shifts +...
-    randi([-max_shift_err + 4, max_shift_err - 4], 1, num_theta);
+    randi([-max_shift_err, max_shift_err], 1, num_theta);
 
 % Begin estimation of the first model.
 prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
