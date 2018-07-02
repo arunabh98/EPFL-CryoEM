@@ -46,16 +46,20 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 	f_p = f_p(:, prj_sort);
 	[unique_angles, unique_indices] = unique(prj_angles);
 
-	for i=2:size(unique_indices, 2) - 1
+	for i=2:size(unique_indices, 1) - 1
 		same_projections = f_p(:, unique_indices(i):unique_indices(i+1) - 1);
 		prev_projection_distance_matrix =...
 			bsxfun(@minus, same_projections, f_p(:, unique_indices(i) - 1));
 		[~, order_proj] = sort(vecnorm(prev_projection_distance_matrix));
-		f_p(:, unique_indices(i):unique_indices(i+1) - 1) = same_projections(:, order_proj);
-		diff_angle = ...
-			prj_angles(unique_indices(i-1)) - prj_angles(unique_indices(i+1))/size(same_projections, 2);
-		corr_angle = prj_angles(unique_indices(i-1)):diff_angle:prj_angles(unique_indices(i+1));
-		prj_angles(:, unique_indices(i):unique_indices(i+1) - 1) = corr_angle;
+		f_p(:, unique_indices(i):unique_indices(i+1) - 1) =...
+            same_projections(:, order_proj);
+        num_projections = size(same_projections, 2);
+        left_half = unique_angles(i):0.5:(unique_angles(i) +...
+            0.5*floor(num_projections/2));
+        right_half = (unique_angles(i) - 0.5*round(num_projections/2) +...
+           0.5):0.5:(unique_angles(i) - 0.5);
+        corr_angles = [right_half left_half];
+        prj_angles(:, unique_indices(i):unique_indices(i+1) - 1) = corr_angles;
 	end
 
 	probe_theta = prj_angles*pi/180;

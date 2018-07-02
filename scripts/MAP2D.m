@@ -12,8 +12,8 @@ P = padarray(P, [3, 3], 0.0);
 sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 0;
 filename = ...
-    '../results/bayesian_estimation/error_angles_and_shifts/server_iitb/5_percent_noise_resolution/';
-num_theta = 360;
+    '../results/bayesian_estimation/error_angles_and_shifts/server_epfl/5_percent_noise/';
+num_theta = 180;
 max_angle_err = 5;
 max_shift_err = 0;
 resolution_angle = 1;
@@ -21,7 +21,7 @@ resolution_space = 1;
 no_of_iterations = 5;
 mask=ones(size(P));
 n = size(P, 1);
-L_pad = 3069; 
+L_pad = 260; 
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -30,7 +30,7 @@ theta_to_write = zeros(10, num_theta);
 imwrite(P, strcat(filename, num2str(num_theta), '/original_image.png'));
 
 % Define ground truth angles and take the tomographic projection.
-theta = 0:0.5:179.5;
+theta = 0:179;
 [projections, svector] = radon(P, theta);
 
 % The original values.
@@ -73,7 +73,7 @@ prob_matrix = ...
         size(f_projections, 2)) + 1/(prob_matrix_height*prob_matrix_width);
 
 % Start estimating the image.
-fourier_radial = zeros(6243, 6243);
+fourier_radial = zeros(1873, 1873);
 parfor i=1:size(prob_matrix, 1)
     for j=1:size(prob_matrix, 2)
         probabilities = squeeze(prob_matrix(i, j, :))';

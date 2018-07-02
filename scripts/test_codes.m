@@ -12,7 +12,7 @@ sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 0;
 filename = ...
     '../results/bayesian_estimation/error_angles_and_shifts/5_percent_noise/';
-num_theta = 90;
+num_theta = 180;
 max_angle_err = 5;
 max_shift_err = 0;
 resolution_angle = 1;
@@ -27,7 +27,7 @@ theta_to_write = zeros(10, num_theta);
 
 % Define ground truth angles and take the tomographic projection.
 % theta = datasample(0:0.5:359.5, num_theta);  
-theta = 0:2:178;
+theta = 0:1:179;
 [projections, svector] = radon(P, theta);
 original_projections = projections;
 original_shifts = zeros(size(theta));
@@ -69,7 +69,7 @@ prob_matrix = ...
 
 % Start estimating the image.
 fourier_radial = zeros(1873, 1873);
-for i=1:size(prob_matrix, 1)
+parfor i=1:size(prob_matrix, 1)
     for j=1:size(prob_matrix, 2)
         probabilities = squeeze(prob_matrix(i, j, :))';
         prob_f_proj = bsxfun(@mtimes, f_projections, probabilities);
