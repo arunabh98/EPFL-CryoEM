@@ -1,7 +1,8 @@
 function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 	% Length of the projections.
 	nfp=length(f_p(:,1));
-
+    
+    res = 0.4;
 	% Calculate the frequencies in the projection.
 	first_part = (1/(nfp*2):1/nfp:0.5)';
 	second_part = -first_part(1:end-1);
@@ -19,7 +20,7 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 	end
 
 	% Resolution of the grid.
-	resolution_grid = 300;
+	resolution_grid = 100;
 
 	% The entire array of angles. 
 	all_prj_angles = 0:0.1:179.9;
@@ -54,12 +55,27 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 		f_p(:, unique_indices(i):unique_indices(i+1) - 1) =...
             same_projections(:, order_proj);
         num_projections = size(same_projections, 2);
-        left_half = unique_angles(i):0.5:(unique_angles(i) +...
-            0.5*floor(num_projections/2));
-        right_half = (unique_angles(i) - 0.5*round(num_projections/2) +...
-           0.5):0.5:(unique_angles(i) - 0.5);
-        corr_angles = [right_half left_half];
-        prj_angles(:, unique_indices(i):unique_indices(i+1) - 1) = corr_angles;
+        if mod(num_projections, 2) == 1
+            left_half = unique_angles(i):res:(unique_angles(i) +...
+                res*floor(num_projections/2));
+            right_half = round((unique_angles(i) - res*round(num_projections/2) +...
+               res), 2):res:round((unique_angles(i) - res), 2);
+            corr_angles = [right_half left_half];
+            if num_projections ~= size(corr_angles, 2)
+                disp("error");
+            end
+            prj_angles(:, unique_indices(i):unique_indices(i+1) - 1) = corr_angles;
+        else
+            left_half = round(unique_angles(i)+res/2, 2):res:(unique_angles(i) +...
+                res*floor(num_projections/2));
+            right_half = round((unique_angles(i) - res*round(num_projections/2) +...
+               res/2), 2):res:round((unique_angles(i) - res/2), 2);
+            corr_angles = [right_half left_half];
+            if num_projections ~= size(corr_angles, 2)
+                disp("error");
+            end
+            prj_angles(:, unique_indices(i):unique_indices(i+1) - 1) = corr_angles;
+        end
 	end
 
 	probe_theta = prj_angles*pi/180;
@@ -84,5 +100,5 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 		fourier_radial(index_non_nan)./count_matrix(index_non_nan);
 
 	fourier_radial(fourier_radial == 0) = NaN;
-	fourier_radial = inpaint_nans(fourier_radial, 2);
+	fourier_radial = inpaint_nans(fourier_radial, 1);
 end

@@ -1,5 +1,3 @@
-feature('numcores')
-
 % Get the image.
 P = phantom(200);
 
@@ -70,8 +68,8 @@ prob_matrix = ...
         size(f_projections, 2)) + 1/(prob_matrix_height*prob_matrix_width);
 
 % Start estimating the image.
-fourier_radial = zeros(1859, 1859);
-parfor i=1:size(prob_matrix, 1)
+fourier_radial = zeros(621, 621);
+for i=1:size(prob_matrix, 1)
     for j=1:size(prob_matrix, 2)
         probabilities = squeeze(prob_matrix(i, j, :))';
         prob_f_proj = bsxfun(@mtimes, f_projections, probabilities);
@@ -111,6 +109,6 @@ parfor i=1:num_theta
     
 end
 
-disp(sum(correct_theta ~= theta));
-disp(sum(first_estimate_theta ~= theta));
-disp(sum(first_estimate_theta ~= correct_theta));
+disp(norm(min(abs(correct_theta - theta), abs(correct_theta - 180 - theta)), 1));
+disp(norm(min(abs(first_estimate_theta - theta), abs(first_estimate_theta - 180 - theta)), 1));
+% disp(norm(first_estimate_theta - correct_theta, 1));
