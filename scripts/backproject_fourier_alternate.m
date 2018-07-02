@@ -19,13 +19,13 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 	end
 
 	% Resolution of the grid.
-	resolution_grid = 100;
+	resolution_grid = 300;
 
 	% The entire array of angles. 
 	all_prj_angles = 0:0.1:179.9;
 
 	% Create the grid.
-	omega_sino = (-(nfp-1)/2:(nfp-1)/2).*(2*pi/size(f_p,1));
+	omega_sino = (-(nfp-1)/2:(nfp-1)/2).*(2*pi/size(f_p, 1));
 	all_theta = all_prj_angles*pi/180;
 	[theta_grid, omega_grid] = meshgrid(all_theta, omega_sino); 
 
@@ -41,6 +41,22 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 	size_matrix = max(max(x(:)), max(y(:)));
 	fourier_radial = zeros(size_matrix, size_matrix);
 	count_matrix = zeros(size_matrix, size_matrix);
+
+	[prj_angles, prj_sort] = sort(prj_angles);
+	f_p = f_p(:, prj_sort);
+	[unique_angles, unique_indices] = unique(prj_angles);
+
+	for i=2:size(unique_indices, 2) - 1
+		same_projections = f_p(:, unique_indices(i):unique_indices(i+1) - 1);
+		prev_projection_distance_matrix =...
+			bsxfun(@minus, same_projections, f_p(:, unique_indices(i) - 1));
+		[~, order_proj] = sort(vecnorm(prev_projection_distance_matrix));
+		f_p(:, unique_indices(i):unique_indices(i+1) - 1) = same_projections(:, order_proj);
+		diff_angle = ...
+			prj_angles(unique_indices(i-1)) - prj_angles(unique_indices(i+1))/size(same_projections, 2);
+		corr_angle = prj_angles(unique_indices(i-1)):diff_angle:prj_angles(unique_indices(i+1));
+		prj_angles(:, unique_indices(i):unique_indices(i+1) - 1) = corr_angle;
+	end
 
 	probe_theta = prj_angles*pi/180;
 	[probe_theta_grid, probe_omega_grid] = meshgrid(probe_theta, omega_sino); 
@@ -64,5 +80,5 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 		fourier_radial(index_non_nan)./count_matrix(index_non_nan);
 
 	fourier_radial(fourier_radial == 0) = NaN;
-	fourier_radial = inpaint_nans(fourier_radial, 1);
+	fourier_radial = inpaint_nans(fourier_radial, 5);
 end
