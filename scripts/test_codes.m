@@ -1,3 +1,5 @@
+feature('numcores')
+
 % Get the image.
 P = phantom(200);
 
