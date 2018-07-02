@@ -3,7 +3,7 @@ feature('numcores')
 P = phantom(200);
 
 % Reduce the size of the image for speed.
-P = imresize(P, 0.5);
+P = imresize(P, 0.2);
 
 % Pad the image with a fixed boundary of 3 pixels.
 P = padarray(P, [3, 3], 0.0);
@@ -21,7 +21,7 @@ resolution_space = 1;
 no_of_iterations = 5;
 mask=ones(size(P));
 n = size(P, 1);
-L_pad = 260; 
+L_pad = 288; 
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -73,7 +73,7 @@ prob_matrix = ...
         size(f_projections, 2)) + 1/(prob_matrix_height*prob_matrix_width);
 
 % Start estimating the image.
-fourier_radial = zeros(1873, 1873);
+fourier_radial = zeros(621, 621);
 parfor i=1:size(prob_matrix, 1)
     for j=1:size(prob_matrix, 2)
         probabilities = squeeze(prob_matrix(i, j, :))';

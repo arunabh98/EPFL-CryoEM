@@ -68,7 +68,7 @@ prob_matrix = ...
         size(f_projections, 2)) + 1/(prob_matrix_height*prob_matrix_width);
 
 % Start estimating the image.
-fourier_radial = zeros(1859, 1859);
+fourier_radial = zeros(621, 621);
 parfor i=1:size(prob_matrix, 1)
     for j=1:size(prob_matrix, 2)
         probabilities = squeeze(prob_matrix(i, j, :))';
@@ -90,10 +90,9 @@ first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
 % figure; imshow(first_estimate_model_alternate);
 
 modified_f_projections = zeros(size(f_projections));
-correct_theta = zeros(size(theta));
 
 error = 0;
-parfor i=1:num_theta
+for i=1:1
     c_proj_1 = project_fourier_alternate(fourier_radial,...
         first_estimate_theta(i), first_estimate_shifts(i), 69);
     c_proj_2 = project_fourier_alternate(fourier_radial,...
@@ -105,10 +104,11 @@ parfor i=1:num_theta
     projections = [c_proj_3 c_proj_1 c_proj_2];
     projections_dist = bsxfun(@minus, projections, f_proj);
     [~, least_index] = min(vecnorm(projections_dist));
-    correct_theta(i) = mod(first_estimate_theta(i)  + least_index - 2, 180);
+    correct_theta = mod(first_estimate_theta(k)  +...
+            x*resolution_angle - resolution_angle - max_angle_err, 180);
+    
+    
     
 end
 
-disp(sum(correct_theta ~= theta));
-disp(sum(first_estimate_theta ~= theta));
-disp(sum(first_estimate_theta ~= correct_theta));
+
