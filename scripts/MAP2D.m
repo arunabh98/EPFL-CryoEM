@@ -12,7 +12,7 @@ P = padarray(P, [3, 3], 0.0);
 sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 0;
 filename = ...
-    '../results/bayesian_estimation/error_angles_and_shifts/server_epfl/5_percent_noise/';
+    '../results/bayesian_estimation/error_angles_and_shifts/local_epfl/5_percent_noise/';
 num_theta = 180;
 max_angle_err = 5;
 max_shift_err = 0;
@@ -30,7 +30,7 @@ theta_to_write = zeros(10, num_theta);
 imwrite(P, strcat(filename, num2str(num_theta), '/original_image.png'));
 
 % Define ground truth angles and take the tomographic projection.
-theta = 0:179;
+theta = 0:1:179;
 [projections, svector] = radon(P, theta);
 
 % The original values.
@@ -64,6 +64,10 @@ first_estimate_theta = mod(theta +...
     randi([-max_angle_err + 4, max_angle_err - 4], 1, num_theta), 180);
 first_estimate_shifts = original_shifts +...
     randi([-max_shift_err, max_shift_err], 1, num_theta);
+
+% Display the error between the first estimate of theta and the actual theta.
+disp(norm(min(abs(first_estimate_theta - theta),...
+    abs(first_estimate_theta - 180 - theta)), 1));
 
 % Begin estimation of the first model.
 prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
@@ -157,6 +161,9 @@ for q=1:no_of_iterations
         correct_shift(k) = shift_estimate(k) +...
             y*resolution_space - resolution_space - max_shift_err;
     end
+    
+    % The error between the current estimate of angles and the actual angles.
+    disp(norm(min(abs(correct_theta - theta), abs(correct_theta - 180 - theta)), 1));
 
     % Divide the projections with the noise variance.
     denoised_f_projections = ...
