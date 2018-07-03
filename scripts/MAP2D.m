@@ -14,7 +14,7 @@ max_shift_amplitude = 0;
 filename = ...
     '../results/bayesian_estimation/error_angles_and_shifts/local_epfl/5_percent_noise/';
 num_theta = 180;
-max_angle_err = 5;
+max_angle_err = 1;
 max_shift_err = 0;
 resolution_angle = 1;
 resolution_space = 1;
@@ -61,7 +61,7 @@ f_projections = fftshift(f_projections, 1); % put DC central after filtering
 % In the first case the angles and shifts will be unknown upto a 
 % certain limit.
 first_estimate_theta = mod(theta +...
-    randi([-max_angle_err + 4, max_angle_err - 4], 1, num_theta), 180);
+    randi([-max_angle_err, max_angle_err], 1, num_theta), 180);
 first_estimate_shifts = original_shifts +...
     randi([-max_shift_err, max_shift_err], 1, num_theta);
 
@@ -70,7 +70,7 @@ disp(norm(min(abs(first_estimate_theta - theta),...
     abs(first_estimate_theta - 180 - theta)), 1));
 
 % Begin estimation of the first model.
-prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
+prob_matrix_height = (10*max_angle_err)/resolution_angle + 1;
 prob_matrix_width = 2*max_shift_err/resolution_space + 1;
 prob_matrix = ...
     zeros(prob_matrix_height, prob_matrix_width,...
