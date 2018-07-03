@@ -10,7 +10,7 @@ P = padarray(P, [3, 3], 0.0);
 % Constants.
 sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 0;
-num_theta = 30;
+num_theta = 180;
 max_angle_err = 5;
 max_shift_err = 0;
 resolution_angle = 1;
@@ -24,7 +24,7 @@ theta_to_write = zeros(10, num_theta);
 
 % Define ground truth angles and take the tomographic projection.
 % theta = datasample(0:0.5:359.5, num_theta);  
-theta = 0:6:174;
+theta = 0:1:179;
 [projections, svector] = radon(P, theta);
 original_projections = projections;
 original_shifts = zeros(size(theta));
