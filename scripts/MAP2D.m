@@ -3,7 +3,7 @@ feature('numcores')
 P = phantom(200);
 
 % Reduce the size of the image for speed.
-P = imresize(P, 0.2);
+P = imresize(P, 0.5);
 
 % Pad the image with a fixed boundary of 3 pixels.
 P = padarray(P, [3, 3], 0.0);
@@ -12,16 +12,16 @@ P = padarray(P, [3, 3], 0.0);
 sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 0;
 filename = ...
-    '../results/bayesian_estimation/error_angles_and_shifts/local_epfl/5_percent_noise/';
+    '../results/bayesian_estimation/error_angles_and_shifts/local_personal/5_percent_noise/';
 num_theta = 180;
-max_angle_err = 1;
+max_angle_err = 0;
 max_shift_err = 0;
 resolution_angle = 1;
 resolution_space = 1;
-no_of_iterations = 5;
+no_of_iterations = 3;
 mask=ones(size(P));
 n = size(P, 1);
-L_pad = 288; 
+L_pad = 260; 
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -44,7 +44,7 @@ for i=1:size(projections, 2)
     projections(:, i) = circshift(projections(:, i), original_shifts(i)); 
 end
 theta_to_write(1, :) = theta;
-theta_to_write(6, :) = original_shifts;
+theta_to_write(7, :) = original_shifts;
 
 % Initialize parameters needed for searching in the space.
 prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
@@ -65,20 +65,24 @@ first_estimate_theta = mod(theta +...
 first_estimate_shifts = original_shifts +...
     randi([-max_shift_err, max_shift_err], 1, num_theta);
 
-% Display the error between the first estimate of theta and the actual theta.
+% Display the error between the first estimate orientations and the
+% correct orientation.
 disp(norm(min(abs(first_estimate_theta - theta),...
-    abs(first_estimate_theta - 180 - theta)), 1));
+    180 - abs(first_estimate_theta - theta)), 1));
+disp(norm(first_estimate_shifts - original_shifts, 1));
 
 % Begin estimation of the first model.
-prob_matrix_height = (10*max_angle_err)/resolution_angle + 1;
+max_angle_err = 0;
+max_shift_err = 0;
+prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
 prob_matrix_width = 2*max_shift_err/resolution_space + 1;
 prob_matrix = ...
     zeros(prob_matrix_height, prob_matrix_width,...
         size(f_projections, 2)) + 1/(prob_matrix_height*prob_matrix_width);
 
 % Start estimating the image.
-fourier_radial = zeros(621, 621);
-parfor i=1:size(prob_matrix, 1)
+fourier_radial = zeros(625, 625);
+for i=1:size(prob_matrix, 1)
     for j=1:size(prob_matrix, 2)
         probabilities = squeeze(prob_matrix(i, j, :))';
         prob_f_proj = bsxfun(@mtimes, f_projections, probabilities);
@@ -93,6 +97,8 @@ parfor i=1:size(prob_matrix, 1)
                 current_shift);
     end
 end
+max_angle_err = 0;
+max_shift_err = 0;
 
 f_image_estimate = fourier_radial(:);
 first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
@@ -162,8 +168,10 @@ for q=1:no_of_iterations
             y*resolution_space - resolution_space - max_shift_err;
     end
     
-    % The error between the current estimate of angles and the actual angles.
-    disp(norm(min(abs(correct_theta - theta), abs(correct_theta - 180 - theta)), 1));
+   % The error between the current orientation and the actual orientations.
+    disp(norm(min(abs(correct_theta - theta),...
+        180 - abs(correct_theta - theta)), 1));
+    disp(norm(correct_shift - original_shifts, 1));
 
     % Divide the projections with the noise variance.
     denoised_f_projections = ...

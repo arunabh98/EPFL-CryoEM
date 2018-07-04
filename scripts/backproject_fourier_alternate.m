@@ -62,7 +62,7 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
                res), 2):res:round((unique_angles(i) - res), 2);
             corr_angles = [right_half left_half];
             if num_projections ~= size(corr_angles, 2)
-                disp("error");
+                disp('error');
             end
             prj_angles(:, unique_indices(i):unique_indices(i+1) - 1) = corr_angles;
         else
@@ -72,7 +72,7 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
                res/2), 2):res:round((unique_angles(i) - res/2), 2);
             corr_angles = [right_half left_half];
             if num_projections ~= size(corr_angles, 2)
-                disp("error");
+                disp('error');
             end
             prj_angles(:, unique_indices(i):unique_indices(i+1) - 1) = corr_angles;
         end
