@@ -67,7 +67,7 @@ first_estimate_shifts = original_shifts +...
 % Display the error between the first estimate orientations and the
 % correct orientation.
 disp(norm(min(abs(first_estimate_theta - theta),...
-    180 - abs(first_estimate_theta - theta)), 1));
+    abs(first_estimate_theta - 180 - theta)), 1));
 disp(norm(first_estimate_shifts - original_shifts, 1));
 
 % Begin estimation of the first model.
@@ -168,8 +168,7 @@ for q=1:no_of_iterations
     end
     
     % The error between the current orientation and the actual orientations.
-    disp(norm(min(abs(correct_theta - theta),...
-        180 - abs(correct_theta - theta)), 1));
+    disp(norm(min(abs(correct_theta - theta), abs(correct_theta - 180 - theta)), 1));
     disp(norm(correct_shift - original_shifts, 1));
 
     % Divide the projections with the noise variance.

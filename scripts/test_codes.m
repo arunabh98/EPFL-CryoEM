@@ -92,7 +92,7 @@ max_shift_err = 1;
 correct_shift = zeros(size(original_shifts));
 
 error = 0;
-parfor i=1:num_theta
+for i=1:num_theta
     c_proj_1 = project_fourier_alternate(fourier_radial,...
         first_estimate_theta(i), first_estimate_shifts(i), 69);
     c_proj_2 = project_fourier_alternate(fourier_radial,...
@@ -104,7 +104,7 @@ parfor i=1:num_theta
     projections = [c_proj_3 c_proj_1 c_proj_2];
     projections_dist = bsxfun(@minus, projections, f_proj);
     [~, least_index] = min(vecnorm(projections_dist));
-    correct_shift(i) = mod(first_estimate_shifts(i)  + least_index - 2, 180);
+    correct_shift(i) = first_estimate_shifts(i)  + least_index - 2;
     
 end
 
