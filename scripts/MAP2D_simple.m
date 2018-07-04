@@ -145,6 +145,7 @@ current_image = first_estimate_model;
 error_plot = zeros(no_of_iterations, 1);
 weights = ones(size(f_image_estimate));
 
+error_plot(1) = norm(first_estimate_model - P);
 for q=1:no_of_iterations
     % Calculate probability for each orientation for each projection.
     [prob_matrix, dist_matrix] = calc_prob_for_each_orientation(f_image_estimate,...
@@ -229,7 +230,7 @@ for q=1:no_of_iterations
         '/reconstructed_image_', num2str(q), '.png'));
 
     % Note the error and update the parameters for the next iteration.
-    error_plot(q) = norm(reconstructed_image - P);
+    error_plot(q + 1) = norm(reconstructed_image - P);
     current_image = reconstructed_image;
     weights = recons_f_denom_weighted;
 
