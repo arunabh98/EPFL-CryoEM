@@ -264,7 +264,8 @@ figure; imshow(reconstructed_image);
 
 theta_to_write(2, :) = first_estimate_theta;
 theta_to_write(3, :) = correct_theta;
-theta_to_write(8, :) = correct_shift;
+theta_to_write(8, :) = first_estimate_shifts;
+theta_to_write(9, :) = correct_shift;
 
 % Relative error in theta.
 theta_to_write(4, 1) =...
