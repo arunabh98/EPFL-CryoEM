@@ -9,10 +9,10 @@ P = padarray(P, [3, 3], 0.0);
 
 % Constants.
 sigmaNoiseFraction = 0.05;
-max_shift_amplitude = 0;
+max_shift_amplitude = 1;
 num_theta = 180;
-max_angle_err = 5;
-max_shift_err = 0;
+max_angle_err = 0;
+max_shift_err = 1;
 resolution_angle = 1;
 resolution_space = 1;
 mask=ones(size(P));
@@ -53,11 +53,13 @@ f_projections = fftshift(f_projections,1); % put DC central after filtering
 % In the first case the angles and shifts will be unknown upto a 
 % certain limit.
 first_estimate_theta = mod(theta +...
-    randi([-max_angle_err + 4, max_angle_err - 4], 1, num_theta), 180);
+    randi([-max_angle_err, max_angle_err], 1, num_theta), 180);
 first_estimate_shifts = original_shifts +...
     randi([-max_shift_err, max_shift_err], 1, num_theta);
 
 % Begin estimation of the first model.
+max_angle_err = 0;
+max_shift_err = 5;
 prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
 prob_matrix_width = 2*max_shift_err/resolution_space + 1;
 prob_matrix = ...
@@ -84,28 +86,27 @@ end
 
 f_image_estimate = fourier_radial(:);
 first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
-% figure; imshow(first_estimate_model_alternate);
+max_angle_err = 0;
+max_shift_err = 1;
 
-modified_f_projections = zeros(size(f_projections));
-correct_theta = zeros(size(theta));
+correct_shift = zeros(size(original_shifts));
 
 error = 0;
 parfor i=1:num_theta
     c_proj_1 = project_fourier_alternate(fourier_radial,...
         first_estimate_theta(i), first_estimate_shifts(i), 69);
     c_proj_2 = project_fourier_alternate(fourier_radial,...
-        first_estimate_theta(i) + 1, first_estimate_shifts(i), 69);
+        first_estimate_theta(i), first_estimate_shifts(i) + 1, 69);
     c_proj_3 = project_fourier_alternate(fourier_radial,...
-        first_estimate_theta(i) - 1, first_estimate_shifts(i), 69);
+        first_estimate_theta(i) - 1, first_estimate_shifts(i) - 1, 69);
     f_proj = f_projections(:, i);
     
     projections = [c_proj_3 c_proj_1 c_proj_2];
     projections_dist = bsxfun(@minus, projections, f_proj);
     [~, least_index] = min(vecnorm(projections_dist));
-    correct_theta(i) = mod(first_estimate_theta(i)  + least_index - 2, 180);
+    correct_shift(i) = mod(first_estimate_shifts(i)  + least_index - 2, 180);
     
 end
 
-disp(norm(min(abs(correct_theta - theta), abs(correct_theta - 180 - theta)), 1));
-disp(norm(min(abs(first_estimate_theta - theta), abs(first_estimate_theta - 180 - theta)), 1));
-% disp(norm(first_estimate_theta - correct_theta, 1));
+disp(norm(correct_shift - original_shifts, 1));
+disp(norm(first_estimate_shifts - original_shifts, 1));
