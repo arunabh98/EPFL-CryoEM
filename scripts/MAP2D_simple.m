@@ -11,7 +11,7 @@ P = padarray(P, [3, 3], 0.0);
 sigmaNoiseFraction = 0.05;
 max_shift_amplitude = 1;
 filename = ...
-    '../results/bayesian_estimation/error_angles_and_shifts/server_epfl/5_percent_noise/';
+    '../results/bayesian_estimation/error_angles_and_shifts/server_epfl/5_percent_noise_3/';
 num_theta = 180;
 max_angle_err = 1;
 max_shift_err = 1;
