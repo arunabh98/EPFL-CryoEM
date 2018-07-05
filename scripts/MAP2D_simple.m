@@ -145,7 +145,7 @@ weights = ones(size(f_image_estimate));
 error_plot(1) = norm(first_estimate_model - P);
 for q=1:no_of_iterations
     % The maximum error in angles for this iteration.
-    max_angle_err = max_angle_err - 0.5;
+    max_angle_err = min(1, max_angle_err - 0.5);
     
     % Initialize parameters needed for searching in the space.
     prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
