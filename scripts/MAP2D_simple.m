@@ -15,9 +15,9 @@ filename = ...
 num_theta = 180;
 max_angle_err = 1;
 max_shift_err = 1;
-resolution_angle = 1;
+resolution_angle = 0.5;
 resolution_space = 1;
-no_of_iterations = 3;
+no_of_iterations = 5;
 mask=ones(size(P));
 n = size(P, 1);
 L_pad = 260; 
@@ -44,10 +44,6 @@ for i=1:size(projections, 2)
 end
 theta_to_write(1, :) = theta;
 theta_to_write(7, :) = original_shifts;
-
-% Initialize parameters needed for searching in the space.
-prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
-    resolution_angle, resolution_space);
 
 % Add noise to projections.
 [projections, sigmaNoise] = add_noise(projections, sigmaNoiseFraction);
@@ -96,9 +92,10 @@ for i=1:size(prob_matrix, 1)
                 current_shift);
     end
 end
-max_angle_err = 1;
+max_angle_err = 2;
 max_shift_err = 1;
 
+% Make the first estimate in the fourier and the spatial domain.
 f_image_estimate = fourier_radial(:);
 first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
 
@@ -147,6 +144,13 @@ weights = ones(size(f_image_estimate));
 
 error_plot(1) = norm(first_estimate_model - P);
 for q=1:no_of_iterations
+    % The maximum error in angles for this iteration.
+    max_angle_err = max_angle_err - 0.5;
+    
+    % Initialize parameters needed for searching in the space.
+    prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
+        resolution_angle, resolution_space);
+    
     % Calculate probability for each orientation for each projection.
     [prob_matrix, dist_matrix] = calc_prob_for_each_orientation(f_image_estimate,...
         f_projections, theta_estimate, first_estimate_theta,...
