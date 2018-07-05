@@ -1,4 +1,3 @@
-feature('numcores')
 % Get the image.
 P = phantom(200);
 
@@ -14,7 +13,7 @@ max_shift_amplitude = 0;
 filename = ...
     '../results/bayesian_estimation/error_angles_and_shifts/local_personal/5_percent_noise/';
 num_theta = 180;
-max_angle_err = 0;
+max_angle_err = 1;
 max_shift_err = 0;
 resolution_angle = 1;
 resolution_space = 1;
@@ -72,7 +71,7 @@ disp(norm(min(abs(first_estimate_theta - theta),...
 disp(norm(first_estimate_shifts - original_shifts, 1));
 
 % Begin estimation of the first model.
-max_angle_err = 0;
+max_angle_err = 5;
 max_shift_err = 0;
 prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
 prob_matrix_width = 2*max_shift_err/resolution_space + 1;
@@ -97,7 +96,7 @@ for i=1:size(prob_matrix, 1)
                 current_shift);
     end
 end
-max_angle_err = 0;
+max_angle_err = 1;
 max_shift_err = 0;
 
 f_image_estimate = fourier_radial(:);
@@ -263,16 +262,18 @@ saveas(gcf, strcat(filename, num2str(num_theta), '/error.png'));
 % Show the reconstructed image.
 figure; imshow(reconstructed_image);
 
-theta_to_write(2, :) = correct_theta;
-theta_to_write(7, :) = correct_shift;
+theta_to_write(2, :) = first_estimate_theta;
+theta_to_write(3, :) = correct_theta;
+theta_to_write(8, :) = first_estimate_shifts;
+theta_to_write(9, :) = correct_shift;
 
 % Relative error in theta.
-theta_to_write(3, 1) =...
-    norm(correct_theta - theta);
 theta_to_write(4, 1) =...
+    norm(correct_theta - theta);
+theta_to_write(5, 1) =...
     norm(correct_shift - original_shifts);
 
-theta_to_write(5, 1) = norm(current_image - P);
+theta_to_write(6, 1) = norm(current_image - P);
 
 % Write all the parameters and estimated parameters.
 csvwrite(strcat(filename, num2str(num_theta),...
