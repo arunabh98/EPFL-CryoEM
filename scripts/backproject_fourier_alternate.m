@@ -51,7 +51,7 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 		same_projections = f_p(:, unique_indices(i):unique_indices(i+1) - 1);
 		prev_projection_distance_matrix =...
 			bsxfun(@minus, same_projections, f_p(:, unique_indices(i) - 1));
-		[~, order_proj] = sort(vecnorm(prev_projection_distance_matrix));
+		[~, order_proj] = sort(sqrt(sum(prev_projection_distance_matrix.^2, 1)));
 		f_p(:, unique_indices(i):unique_indices(i+1) - 1) =...
             same_projections(:, order_proj);
         num_projections = size(same_projections, 2);
