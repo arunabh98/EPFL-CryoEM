@@ -210,17 +210,6 @@ for q=1:no_of_iterations
     end
 
     reconstructed_f_numerator = reconstructed_f_numerator(:);
-    recons_f_denom = recons_f_denom(:);
-    
-    % Update the weights on the denominator.
-    recons_f_denom_prior = recons_f_denom + 1./prior_variance;
-    w = kaiser(size(f_image_estimate, 1), 50);
-    recons_f_denom_weighted = ...
-        weights./cconv((recons_f_denom_prior.*weights), w, size(f_image_estimate, 1));
-    reconstructed_f_image = ...
-        reconstructed_f_numerator;
-%     reconstructed_f_image = ...
-%         reconstructed_f_image*norm(fourier_radial)/norm(reconstructed_f_image);
     reconstructed_f_image = ...
         reshape(reconstructed_f_numerator, [output_size, output_size]);
 

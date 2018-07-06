@@ -9,15 +9,15 @@ P = padarray(P, [3, 3], 0.0);
 
 % Constants.
 sigmaNoiseFraction = 0.05;
-max_shift_amplitude = 0;
+max_shift_amplitude = 1;
 filename = ...
-    '../results/bayesian_estimation/error_angles_and_shifts/local_personal/5_percent_noise/';
+    '../results/bayesian_estimation/error_angles_and_shifts/server_epfl/5_percent_noise_2/';
 num_theta = 180;
 max_angle_err = 1;
-max_shift_err = 0;
-resolution_angle = 1;
+max_shift_err = 1;
+resolution_angle = 0.5;
 resolution_space = 1;
-no_of_iterations = 3;
+no_of_iterations = 5;
 mask=ones(size(P));
 n = size(P, 1);
 L_pad = 260; 
@@ -45,10 +45,6 @@ end
 theta_to_write(1, :) = theta;
 theta_to_write(7, :) = original_shifts;
 
-% Initialize parameters needed for searching in the space.
-prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
-    resolution_angle, resolution_space);
-
 % Add noise to projections.
 [projections, sigmaNoise] = add_noise(projections, sigmaNoiseFraction);
 
@@ -71,8 +67,8 @@ disp(norm(min(abs(first_estimate_theta - theta),...
 disp(norm(first_estimate_shifts - original_shifts, 1));
 
 % Begin estimation of the first model.
-max_angle_err = 5;
-max_shift_err = 0;
+max_angle_err = 1;
+max_shift_err = 1;
 prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
 prob_matrix_width = 2*max_shift_err/resolution_space + 1;
 prob_matrix = ...
@@ -97,7 +93,7 @@ for i=1:size(prob_matrix, 1)
     end
 end
 max_angle_err = 1;
-max_shift_err = 0;
+max_shift_err = 1;
 
 f_image_estimate = fourier_radial(:);
 first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
@@ -133,7 +129,7 @@ noise_estimate = mean(noise_estimate(:));
 noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1);
 
 % Calculate the variance of the prior gaussian distribution.
-prior_variance = 20*abs(f_image_estimate).^2;
+prior_variance = 1*abs(f_image_estimate).^2;
 prior_variance = mean(prior_variance(:));
 
 first_orientation = Orientation(first_estimate_theta, first_estimate_shifts);
@@ -147,6 +143,13 @@ weights = ones(size(f_image_estimate));
 
 error_plot(1) = norm(first_estimate_model - P);
 for q=1:no_of_iterations
+    % The maximum error in angles for this iteration.
+    max_angle_err = max(1, max_angle_err - 0.5);
+
+    % Initialize parameters needed for searching in the space.
+    prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
+        resolution_angle, resolution_space);
+
     % Calculate probability for each orientation for each projection.
     [prob_matrix, dist_matrix] = calc_prob_for_each_orientation(f_image_estimate,...
         f_projections, theta_estimate, first_estimate_theta,...
@@ -209,13 +212,11 @@ for q=1:no_of_iterations
     
     % Update the weights on the denominator.
     recons_f_denom_prior = recons_f_denom + 1./prior_variance;
-    w = kaiser(size(f_image_estimate, 1), 50);
+    w = kaiser(size(f_image_estimate, 1), 20);
     recons_f_denom_weighted = ...
         weights./cconv((recons_f_denom_prior.*weights), w, size(f_image_estimate, 1));
     reconstructed_f_image = ...
-        reconstructed_f_numerator.*recons_f_denom_weighted*5e3;
-    reconstructed_f_image = ...
-        reconstructed_f_image*norm(fourier_radial)/norm(reconstructed_f_image);
+        reconstructed_f_numerator.*recons_f_denom_weighted*1e4;
     reconstructed_f_image = ...
         reshape(reconstructed_f_image, [output_size, output_size]);
 
@@ -251,7 +252,7 @@ for q=1:no_of_iterations
     shift_estimate = correct_shift;
 
     % Calculate the variance of the prior gaussian distribution.
-    prior_variance = 20*abs(f_image_estimate).^2;
+    prior_variance = 1*abs(f_image_estimate).^2;
     prior_variance = mean(prior_variance(:));
 end
 
