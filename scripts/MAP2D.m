@@ -129,7 +129,7 @@ noise_estimate = mean(noise_estimate(:));
 noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1);
 
 % Calculate the variance of the prior gaussian distribution.
-prior_variance = 10*abs(f_image_estimate).^2;
+prior_variance = 20*abs(f_image_estimate).^2;
 prior_variance = mean(prior_variance(:));
 
 first_orientation = Orientation(first_estimate_theta, first_estimate_shifts);
@@ -252,7 +252,7 @@ for q=1:no_of_iterations
     shift_estimate = correct_shift;
 
     % Calculate the variance of the prior gaussian distribution.
-    prior_variance = 10*abs(f_image_estimate).^2;
+    prior_variance = 20*abs(f_image_estimate).^2;
     prior_variance = mean(prior_variance(:));
 end
 
