@@ -19,7 +19,8 @@ function projection = project_fourier_alternate(fourier_radial, probe_angle, shi
 	y = round(y*resolution_grid);
 
 	min_value = min(min(x(:)),  min(y(:)));
-
+    
+    probe_angle = mod(probe_angle, 180);
 	probe_theta = probe_angle*pi/180;
 	[probe_theta_grid, probe_omega_grid] = meshgrid(probe_theta, omega_sino);
 	[probe_x, probe_y] = pol2cart(probe_theta_grid, probe_omega_grid);
@@ -30,7 +31,7 @@ function projection = project_fourier_alternate(fourier_radial, probe_angle, shi
 
 	projection = zeros(proj_length, 1);
 
-	parfor i=1:proj_length
+	for i=1:proj_length
 		projection(i) = fourier_radial(probe_y(i), probe_x(i));
 	end
 
