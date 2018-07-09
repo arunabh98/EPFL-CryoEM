@@ -8,17 +8,18 @@ P = imresize(P, 0.5);
 P = padarray(P, [3, 3], 0.0);
 
 % Constants.
-sigmaNoiseFraction = 0.05;
+sigmaNoiseFraction = 0.00;
 filename = ...
-	'../results/bayesian_estimation/error_angles_and_shifts/server_epfl/5_percent_noise/';
+	'../results/cryoSPARC/5_percent_noise/';
 num_theta = 180;
 max_shift_err = 0;
 max_angle_err = 1;
 resolution_angle = 1;
 resolution_space = 1;
 L_pad = 260; 
-no_of_iterations = 10;
+no_of_iterations = 25;
 momentum_parameter = 0.9;
+gamma = 0.9999;
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -55,11 +56,15 @@ f_size = 625;
 std_deviation = 5;
 f_image_estimate = ...
 	std_deviation*randn(f_size*f_size, 1) + i*std_deviation*randn(f_size*f_size, 1);
-prior_variance = repmat(std_deviation.^2, size(f_image_estimate, 1), 1);
+prior_variance = repmat(std_deviation.^2*10, size(f_image_estimate, 1), 1);
 
 % Make the first estimate in the fourier and the spatial domain.
 fourier_radial = reshape(f_image_estimate, [f_size f_size]);
 first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
+
+% Write the first estimate image.
+imwrite(first_estimate_model,...
+    strcat(filename, num2str(num_theta), '/original_image.png'));
 
 % Projection and image constants.
 output_size = max(size(fourier_radial));
@@ -75,9 +80,7 @@ parfor k=1:num_theta
 	f_proj = f_projections(:, k);
 	noise_estimate(:, k) = 0.5*abs(c_proj - f_proj).^2;
 end
-noise_estimate = sqrt(noise_estimate);
-noise_estimate = mean(noise_estimate(:));
-noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1);
+noise_estimate = mean(noise_estimate, 2);
 
 % Initialize projection parameters object.
 projection_parameters = ...
@@ -87,15 +90,33 @@ projection_parameters = ...
 figure; imshow(first_estimate_model, []);
 disp(norm(first_estimate_model - P));
 
+% Save the first error.
+error_plot = zeros(no_of_iterations + 1, 1);
+error_plot(1) = norm(first_estimate_model - P);
+
 % Save the first model.
 imwrite(first_estimate_model, strcat(filename, num2str(num_theta),...
-	'/first_estimate.png'));
+	'/first_estimate_image.png'));
 
 % The gradient term for each iteration.
 momentum_gradient = zeros(size(f_image_estimate));
 
 % Start the Stochastic Gradient Descent.
 for q=1:no_of_iterations
+% 	% Noise estimate for this iteration.
+% 	w_q = zeros(size(noise_estimate));
+% 	sigma_bar_q = zeros(size(noise_estimate));
+% 	w_hat_q = 2500*(gamma^q);
+% 	sigma_bar = 1/(sigmaNoise.^2);
+% 	sigmaHat = 8*sigma_bar;
+% 	for i=1:q
+% 		w_q = w_q + ones(size(noise_estimate)).*gamma^(q-i)*30;
+% 		sigma_bar_q = sigma_bar_q + gamma^(q-i).*30.*noise_estimate;
+% 	end
+% 	noise_variance = ...
+% 		w_q.*sigma_bar_q + 50*sigma_bar + sigmaHat*w_hat_q./(w_q + 50 + w_hat_q);
+    noise_variance = noise_estimate;
+	
 	% Randomly select some projections.
 	[sel_projections, idx] = datasample(f_projections, 30, 2, 'Replace', false);
 	selected_angles = first_estimate_theta(idx);
@@ -107,14 +128,14 @@ for q=1:no_of_iterations
 
 	% The gradient vector for this iteration.
 	gradient_vector_iter = zeros(size(f_image_estimate));
-    
-    noisy_step_vector_iter = zeros(size(f_image_estimate));
+	
+	noisy_step_vector_iter = zeros(size(f_image_estimate));
 
 	for j=-max_angle_err:resolution_angle:max_angle_err
 		thetas_iter = mod(selected_angles  + j, 180);
 
 		projections_iter = zeros(size(sel_projections));
-        noisy_iter = zeros(size(sel_projections));
+		noisy_iter = zeros(size(sel_projections));
 		for i=1:size(sel_projections, 2)
 			% Orientation of the projection for this iteration.
 			orientation = Orientation(thetas_iter(i), 0);
@@ -124,12 +145,12 @@ for q=1:no_of_iterations
 
 			% Probability of the projection given the model.
 			U_i = calc_prob_projection(sel_projections(:, i), f_image_estimate,...
-				estimated_orientation, noise_estimate, projection_parameters,...
+				estimated_orientation, noise_variance, projection_parameters,...
 				prior_parameters);
 
 			% Calculate the prob of projection given orientation and model.
-			prob_proj = prob_of_proj_given_orientation_and_model(sel_projections(:, i),...
-				f_image_estimate, orientation, noise_estimate, projection_parameters);
+			prob_proj = prob_of_proj_given_orientation(sel_projections(:, i),...
+				f_image_estimate, orientation, noise_variance, projection_parameters);
 
 			% Difference between given projection and calculated projection.
 			f_image_reshaped =...
@@ -137,27 +158,28 @@ for q=1:no_of_iterations
 			diff_proj =  sel_projections(:, i) - project_fourier_alternate(...
 				f_image_reshaped, thetas_iter(i), 0, projection_length);
 
-			prob_phi = (1/((2*max_angle_err)/resolution_angle + 1));
-            projections_iter(:, i) = ...
-				(prob_proj/U_i).*(diff_proj./noise_estimate).*prob_phi;
+			prob_phi = 1;
+			projections_iter(:, i) = ...
+				(prob_proj/U_i).*(diff_proj./noise_variance).*prob_phi;
 		
-            noisy_iter(:, i) = ...
-                (prob_proj/U_i).*(ones(size(diff_proj))./noise_estimate).*prob_phi;
-        end
+			noisy_iter(:, i) = ...
+				(prob_proj/U_i).*(ones(size(diff_proj))./noise_variance).*prob_phi;
+		end
 		
 		% Calculate the gradient due to current estimate.
 		gradient_iter = ...
-            backproject_fourier_alternate(projections_iter, thetas_iter, shifts);
+			backproject_fourier_alternate(projections_iter, thetas_iter, shifts);
 		gradient_iter = gradient_iter(:);
-        
-        % Calculate the step size form noise.
-        noisy_step_size = ...
-            backproject_fourier_alternate(noisy_iter, thetas_iter, shifts);
+		
+		% Calculate the step size form noise.
+		noisy_step_size = ...
+			backproject_fourier_alternate(noisy_iter, thetas_iter, shifts);
+		noisy_step_size = noisy_step_size(:);
 
 		% Compute the total gradient.
 		gradient_vector_iter = gradient_vector_iter + gradient_iter;
-        
-        noisy_step_vector_iter = noisy_step_vector_iter + noisy_step_size;
+		
+		noisy_step_vector_iter = noisy_step_vector_iter + noisy_step_size;
 		
 	end
 	
@@ -168,24 +190,44 @@ for q=1:no_of_iterations
 	gradient_vector_iter = ...
 		gradient_vector_iter*size(projections, 2)/size(sel_projections, 2) +...
 		prior_gradient;
+	
+	% Calculate the step size.
+	step_size = 1/max(noisy_step_vector_iter);
+	
+	% Gradient with momentum.
+	momentum_gradient = ...
+		momentum_parameter*momentum_gradient +...
+		(1 - momentum_parameter)*step_size*gradient_vector_iter;
+	
+	% Calculate the next estimate.
+	f_image_estimate = f_image_estimate + momentum_gradient;
+	f_image_estimate_reshaped = ...
+		reshape(f_image_estimate, [output_size, output_size]);
+	
+	% next noise estimate.
+	estimated_noise_vector = zeros(projection_length, num_theta);
+	parfor k=1:num_theta
+		c_proj = ...
+			project_fourier_alternate(f_image_estimate_reshaped,...
+			first_estimate_theta(k), first_estimate_shifts(k),...
+			projection_length);
+		f_proj = f_projections(:, k);
+		estimated_noise_vector(:, k) = 0.5*abs(c_proj - f_proj).^2;
+	end
+	noise_estimate = mean(estimated_noise_vector, 2);
+	
+	% Display the image and calculate the error.
+	image_estimate = Ifft2_2_Img(f_image_estimate_reshaped, L_pad);
+	figure; imshow(image_estimate, []);
+	disp(norm(image_estimate - P));
     
-    % Calculate the step size.
-    step_size = 1/max(noisy_step_vector_iter);
-    
-    % Gradient with momentum.
-    momentum_gradient = ...
-        momentum_parameter*momentum_gradient +...
-        (1 - momentum_parameter)*step_size*gradient_vector_iter;
-    
-    % Calculate the next estimate.
-    f_image_estimate = f_image_estimate + momentum_gradient;
-    f_image_estimate_reshaped = ...
-        reshape(f_image_estimate, [output_size, output_size]);
-    
-    % Display the image and calculate the error.
-    image_estimate = Ifft2_2_Img(f_image_estimate_reshaped, L_pad);
-    figure; imshow(image_estimate, []);
-    disp(norm(image_estimate - P));
+    % Save the model and the image in the current iteration.
+    error_plot(q+1) = norm(image_estimate - P);
+    imwrite(image_estimate, strcat(filename, num2str(num_theta),...
+        '/reconstructed_image_', num2str(q), '.png'));
 end
 
+% Save the error plot.
+figure; plot(error_plot);
+saveas(gcf, strcat(filename, num2str(num_theta), '/error.png'));
 
