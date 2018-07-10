@@ -17,7 +17,7 @@ max_angle_err = 1;
 resolution_angle = 1;
 resolution_space = 1;
 L_pad = 260; 
-no_of_iterations = 25;
+no_of_iterations = 50;
 momentum_parameter = 0.9;
 gamma = 0.9999;
 
