@@ -1,3 +1,4 @@
+digits(100);
 % Get the image.
 P = phantom(200);
 
@@ -8,7 +9,7 @@ P = imresize(P, 0.5);
 P = padarray(P, [3, 3], 0.0);
 
 % Constants.
-sigmaNoiseFraction = 0.00;
+sigmaNoiseFraction = 0.05;
 filename = ...
 	'../results/cryoSPARC/5_percent_noise/';
 num_theta = 180;
@@ -17,9 +18,11 @@ max_angle_err = 1;
 resolution_angle = 1;
 resolution_space = 1;
 L_pad = 260; 
-no_of_iterations = 25;
+no_of_iterations = 10;
 momentum_parameter = 0.9;
 gamma = 0.9999;
+number_of_samples = zeros(no_of_iterations, 1);
+number_of_samples(1) = 30;
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -52,11 +55,15 @@ first_estimate_shifts = zeros(size(theta));
 % Size of fourier domain.
 f_size = 625;
 
+% Initialize parameters needed for searching in the space.
+prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
+    resolution_angle, resolution_space);
+
 % Randomly initialize the initial model with std_deviation = 5
 std_deviation = 5;
 f_image_estimate = ...
 	std_deviation*randn(f_size*f_size, 1) + i*std_deviation*randn(f_size*f_size, 1);
-prior_variance = repmat(std_deviation.^2*10, size(f_image_estimate, 1), 1);
+prior_variance = repmat(std_deviation.^2*50, size(f_image_estimate, 1), 1);
 
 % Make the first estimate in the fourier and the spatial domain.
 fourier_radial = reshape(f_image_estimate, [f_size f_size]);
@@ -72,19 +79,17 @@ height = size(fourier_radial, 1);
 width = size(fourier_radial, 2);
 projection_length = size(f_projections, 1);
 
-% Noise estimate.
-noise_estimate = zeros(projection_length, num_theta);
-parfor k=1:num_theta
-	c_proj = project_fourier_alternate(fourier_radial,...
-		first_estimate_theta(k), first_estimate_shifts(k), projection_length);
-	f_proj = f_projections(:, k);
-	noise_estimate(:, k) = 0.5*abs(c_proj - f_proj).^2;
-end
-noise_estimate = mean(noise_estimate, 2);
+first_noise_estimate = repmat(1/(sigmaNoise.^2)*3100, projection_length, 1);
 
 % Initialize projection parameters object.
 projection_parameters = ...
 	ProjectionParameters(width, height, output_size, projection_length);
+
+% Noise estimate.
+noise_estimate = zeros(projection_length, 1);
+noise_estimate(:, 1) = average_reconstruction_error(f_image_estimate,...
+    f_projections, first_estimate_theta, first_estimate_shifts,...
+    projection_parameters, prior_parameters, first_noise_estimate);
 
 % Show the first estimate image.
 figure; imshow(first_estimate_model, []);
@@ -103,72 +108,84 @@ momentum_gradient = zeros(size(f_image_estimate));
 
 % Start the Stochastic Gradient Descent.
 for q=1:no_of_iterations
-% 	% Noise estimate for this iteration.
-% 	w_q = zeros(size(noise_estimate));
-% 	sigma_bar_q = zeros(size(noise_estimate));
-% 	w_hat_q = 2500*(gamma^q);
-% 	sigma_bar = 1/(sigmaNoise.^2);
-% 	sigmaHat = 8*sigma_bar;
-% 	for i=1:q
-% 		w_q = w_q + ones(size(noise_estimate)).*gamma^(q-i)*30;
-% 		sigma_bar_q = sigma_bar_q + gamma^(q-i).*30.*noise_estimate;
-% 	end
-% 	noise_variance = ...
-% 		w_q.*sigma_bar_q + 50*sigma_bar + sigmaHat*w_hat_q./(w_q + 50 + w_hat_q);
-    noise_variance = noise_estimate;
+	% Noise estimate for this iteration.
+	w_q = zeros(size(noise_estimate, 1), 1);
+	sigma_bar_q = zeros(size(noise_estimate, 1), 1);
+	w_hat_q = 1*(gamma^q);
+	sigma_bar = 1/(sigmaNoise.^2)*3100;
+	sigmaHat = 1*sigma_bar;
+	for i=1:q
+		w_q = w_q +...
+            ones(size(noise_estimate, 1), 1).*gamma^(q-i)*number_of_samples(i);
+		sigma_bar_q = sigma_bar_q + noise_estimate(:, i).*gamma^(q-i);
+	end
+	noise_variance = ...
+		vpa((w_q.*sigma_bar_q + 50*sigma_bar + sigmaHat*w_hat_q)./...
+        (w_q + 50 + w_hat_q));
 	
 	% Randomly select some projections.
-	[sel_projections, idx] = datasample(f_projections, 30, 2, 'Replace', false);
+	[sel_projections, idx] =...
+        datasample(f_projections, number_of_samples(q), 2,...
+        'Replace', false);
 	selected_angles = first_estimate_theta(idx);
 	shifts = zeros(size(selected_angles));
 
-	% Initialize parameters needed for searching in the space.
-	prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
-		resolution_angle, resolution_space);
-
 	% The gradient vector for this iteration.
-	gradient_vector_iter = zeros(size(f_image_estimate));
-	
+	gradient_vector_iter = zeros(size(f_image_estimate));	
 	noisy_step_vector_iter = zeros(size(f_image_estimate));
+    
+    % Calculate the probability of each projection.
+    U = zeros(size(sel_projections, 2), 1);
+    for i=1:size(sel_projections, 2)
+        % The orientation specified for this iteration.
+        estimated_orientation = Orientation(selected_angles(i), 0);
+        
+        % Probability of the projection given the model.
+        U(i) = ...
+            calc_prob_projection(sel_projections(:, i),...
+            f_image_estimate, estimated_orientation, noise_variance,...
+            projection_parameters, prior_parameters);
+    end
 
 	for j=-max_angle_err:resolution_angle:max_angle_err
-		thetas_iter = mod(selected_angles  + j, 180);
-
+        
+		thetas_iter = selected_angles  + j;
 		projections_iter = zeros(size(sel_projections));
 		noisy_iter = zeros(size(sel_projections));
+        
 		for i=1:size(sel_projections, 2)
 			% Orientation of the projection for this iteration.
 			orientation = Orientation(thetas_iter(i), 0);
 
-			% The orientation specified for this iteration.
-			estimated_orientation = Orientation(selected_angles(i), 0);
-
-			% Probability of the projection given the model.
-			U_i = calc_prob_projection(sel_projections(:, i), f_image_estimate,...
-				estimated_orientation, noise_variance, projection_parameters,...
-				prior_parameters);
-
 			% Calculate the prob of projection given orientation and model.
-			prob_proj = prob_of_proj_given_orientation(sel_projections(:, i),...
-				f_image_estimate, orientation, noise_variance, projection_parameters);
+			prob_proj = ...
+                prob_of_proj_given_orientation(sel_projections(:, i),...
+				f_image_estimate, orientation, noise_variance,...
+                projection_parameters);
 
 			% Difference between given projection and calculated projection.
 			f_image_reshaped =...
 				reshape(f_image_estimate, [output_size, output_size]);
-			diff_proj =  sel_projections(:, i) - project_fourier_alternate(...
+			diff_proj =  ...
+                sel_projections(:, i) - project_fourier_alternate(...
 				f_image_reshaped, thetas_iter(i), 0, projection_length);
-
-			prob_phi = 1;
+            
+            % The probability of each orientation.
+			prob_phi = 1/((2*max_angle_err)/resolution_angle + 1);
+            
+            % Save projections to find gradient and step-size.
 			projections_iter(:, i) = ...
-				(prob_proj/U_i).*(diff_proj./noise_variance).*prob_phi;
-		
+				vpa((prob_proj/U(i)).*(diff_proj./noise_variance)*...
+                prob_phi*resolution_angle);	
 			noisy_iter(:, i) = ...
-				(prob_proj/U_i).*(ones(size(diff_proj))./noise_variance).*prob_phi;
+				vpa((prob_proj/U(i)).*(ones(size(diff_proj))./noise_variance)*...
+                prob_phi*resolution_angle);
 		end
 		
 		% Calculate the gradient due to current estimate.
 		gradient_iter = ...
-			backproject_fourier_alternate(projections_iter, thetas_iter, shifts);
+			backproject_fourier_alternate(...
+            projections_iter, thetas_iter, shifts);
 		gradient_iter = gradient_iter(:);
 		
 		% Calculate the step size form noise.
@@ -177,10 +194,8 @@ for q=1:no_of_iterations
 		noisy_step_size = noisy_step_size(:);
 
 		% Compute the total gradient.
-		gradient_vector_iter = gradient_vector_iter + gradient_iter;
-		
-		noisy_step_vector_iter = noisy_step_vector_iter + noisy_step_size;
-		
+		gradient_vector_iter = gradient_vector_iter + gradient_iter;	
+		noisy_step_vector_iter = noisy_step_vector_iter + noisy_step_size;	
 	end
 	
 	% Calculate the gradient due to the prior distribution.
@@ -205,21 +220,22 @@ for q=1:no_of_iterations
 		reshape(f_image_estimate, [output_size, output_size]);
 	
 	% next noise estimate.
-	estimated_noise_vector = zeros(projection_length, num_theta);
-	parfor k=1:num_theta
-		c_proj = ...
-			project_fourier_alternate(f_image_estimate_reshaped,...
-			first_estimate_theta(k), first_estimate_shifts(k),...
-			projection_length);
-		f_proj = f_projections(:, k);
-		estimated_noise_vector(:, k) = 0.5*abs(c_proj - f_proj).^2;
-	end
-	noise_estimate = mean(estimated_noise_vector, 2);
+	next_noise_estimate = average_reconstruction_error(f_image_estimate,...
+    f_projections, first_estimate_theta, first_estimate_shifts,...
+    projection_parameters, prior_parameters, noise_variance);
+    noise_estimate = [noise_estimate next_noise_estimate];
 	
 	% Display the image and calculate the error.
 	image_estimate = Ifft2_2_Img(f_image_estimate_reshaped, L_pad);
 	figure; imshow(image_estimate, []);
 	disp(norm(image_estimate - P));
+    
+    % Update the number of samples for the next iteration.
+    if norm(image_estimate - P) < 10
+        number_of_samples(q+1) = 100;
+    else
+        number_of_samples(q+1) = 30;
+    end
     
     % Save the model and the image in the current iteration.
     error_plot(q+1) = norm(image_estimate - P);

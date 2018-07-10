@@ -6,6 +6,8 @@ function prob = calc_prob_projection(...
 	max_angle_err = prior_parameters.max_angle_err;
 	resolution_angle = prior_parameters.resolution_angle;
 	angle_estimate = estimated_orientation.theta;
+    
+    prob_phi = 1/((2*max_angle_err)/resolution_angle + 1);
 
 	prob = 0;
 	for i=-max_angle_err:resolution_angle:max_angle_err
@@ -13,6 +15,6 @@ function prob = calc_prob_projection(...
 	        Orientation(angle_estimate + i, 0);
 		prob_orient = prob_of_proj_given_orientation(f_proj, f_image,...
             orientation, noise_estimate, projection_parameters);
-		prob = prob + prob_orient;
+		prob = prob + vpa(prob_orient*prob_phi*resolution_angle);
 	end
 end
