@@ -15,7 +15,7 @@ filename = ...
 num_theta = 180;
 max_angle_err = 1;
 max_shift_err = 0;
-resolution_angle = 0.5;
+resolution_angle = 1;
 resolution_space = 1;
 no_of_iterations = 3;
 mask=ones(size(P));
@@ -116,27 +116,21 @@ disp(norm(first_estimate_model - P));
 imwrite(first_estimate_model, strcat(filename, num2str(num_theta),...
     '/first_estimate.png'));
 
+% Initialize parameters needed for searching in the space.
+prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
+    resolution_angle, resolution_space);
+
+% The first noise estimate.
+first_noise_estimate = repmat(1/(sigmaNoise.^2), projection_length, 1);
+
 % Noise estimate.
 noise_estimate = average_reconstruction_error(f_image_estimate,...
     f_projections, first_estimate_theta, first_estimate_shifts,...
-    projection_parameters, prior_parameters, 1/(sigmaNoise.^2));
-
-noise_estimate = zeros(projection_length, num_theta);
-parfor k=1:num_theta
-    c_proj = project_fourier_alternate(fourier_radial,...
-        first_estimate_theta(k), first_estimate_shifts(k), projection_length);
-    f_proj = f_projections(:, k);
-    noise_estimate(:, k) = 0.5*abs(c_proj - f_proj).^2;
-end
-noise_estimate = sqrt(noise_estimate);
-noise_estimate = mean(noise_estimate(:));
-noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1);
+    projection_parameters, prior_parameters, first_noise_estimate);
 
 % Calculate the variance of the prior gaussian distribution.
 prior_variance = 20*abs(f_image_estimate).^2;
 prior_variance = mean(prior_variance(:));
-
-first_orientation = Orientation(first_estimate_theta, first_estimate_shifts);
 
 % Start the iteration.
 theta_estimate = first_estimate_theta;
@@ -240,17 +234,11 @@ for q=1:no_of_iterations
     weights = recons_f_denom_weighted;
 
     % next noise estimate.
-    estimated_noise_vector = zeros(projection_length, num_theta);
-    parfor k=1:num_theta
-        c_proj = project_fourier_alternate(reconstructed_f_image, correct_theta(k),...
-            correct_shift(k), projection_length);
-        f_proj = f_projections(:, k);
-        estimated_noise_vector(:, k) = 0.5*abs(c_proj - f_proj).^2;
-    end
-    estimated_noise_vector = sqrt(estimated_noise_vector);
-    noise_estimate = mean(estimated_noise_vector(:));
-    noise_estimate = repmat(noise_estimate, size(f_projections, 1), 1);
-
+    noise_estimate = average_reconstruction_error(reconstructed_f_image,...
+        f_projections, first_estimate_theta, first_estimate_shifts,...
+        projection_parameters, prior_parameters, noise_estimate);
+    
+    % Next estimate.
     f_image_estimate = reconstructed_f_image(:);
     theta_estimate = correct_theta;
     shift_estimate = correct_shift;
