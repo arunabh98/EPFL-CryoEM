@@ -42,7 +42,8 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 	size_matrix = max(max(x(:)), max(y(:)));
 	fourier_radial = zeros(size_matrix, size_matrix);
 	count_matrix = zeros(size_matrix, size_matrix);
-
+    
+    prj_angles = mod(prj_angles, 180);
 	[prj_angles, prj_sort] = sort(prj_angles);
 	f_p = f_p(:, prj_sort);
 	[unique_angles, unique_indices] = unique(prj_angles);

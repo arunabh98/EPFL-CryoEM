@@ -9,12 +9,12 @@ P = padarray(P, [3, 3], 0.0);
 
 % Constants.
 sigmaNoiseFraction = 0.05;
-max_shift_amplitude = 1;
+max_shift_amplitude = 0;
 filename = ...
     '../results/bayesian_estimation/error_angles_and_shifts/server_epfl/5_percent_noise_2/';
 num_theta = 180;
 max_angle_err = 1;
-max_shift_err = 1;
+max_shift_err = 0;
 resolution_angle = 0.5;
 resolution_space = 1;
 no_of_iterations = 3;
@@ -117,6 +117,10 @@ imwrite(first_estimate_model, strcat(filename, num2str(num_theta),...
     '/first_estimate.png'));
 
 % Noise estimate.
+noise_estimate = average_reconstruction_error(f_image_estimate,...
+    f_projections, first_estimate_theta, first_estimate_shifts,...
+    projection_parameters, prior_parameters, 1/(sigmaNoise.^2));
+
 noise_estimate = zeros(projection_length, num_theta);
 parfor k=1:num_theta
     c_proj = project_fourier_alternate(fourier_radial,...

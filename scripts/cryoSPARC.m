@@ -14,7 +14,7 @@ filename = ...
 	'../results/cryoSPARC/5_percent_noise/';
 num_theta = 180;
 max_shift_err = 0;
-max_angle_err = 1;
+max_angle_err = 30;
 resolution_angle = 1;
 resolution_space = 1;
 L_pad = 260; 
@@ -136,15 +136,19 @@ for q=1:no_of_iterations
     
     % Calculate the probability of each projection.
     U = zeros(size(sel_projections, 2), 1);
+    U_dist = ...
+        zeros(size(sel_projections, 2),...
+        (2*max_angle_err)/resolution_angle + 1);
     for i=1:size(sel_projections, 2)
         % The orientation specified for this iteration.
         estimated_orientation = Orientation(selected_angles(i), 0);
         
         % Probability of the projection given the model.
-        U(i) = ...
+        [U(i), dist_vector] = ...
             calc_prob_projection(sel_projections(:, i),...
             f_image_estimate, estimated_orientation, noise_variance,...
             projection_parameters, prior_parameters);
+        U_dist(i, :) = dist_vector;
     end
 
 	for j=-max_angle_err:resolution_angle:max_angle_err
@@ -158,7 +162,7 @@ for q=1:no_of_iterations
 			orientation = Orientation(thetas_iter(i), 0);
 
 			% Calculate the prob of projection given orientation and model.
-			prob_proj = ...
+			[prob_proj, dist_proj] = ...
                 prob_of_proj_given_orientation(sel_projections(:, i),...
 				f_image_estimate, orientation, noise_variance,...
                 projection_parameters);
@@ -173,13 +177,14 @@ for q=1:no_of_iterations
             % The probability of each orientation.
 			prob_phi = 1/((2*max_angle_err)/resolution_angle + 1);
             
+            dist_i_orient = U_dist(i, :) - dist_proj;
+            prob_i_orient = 1/(sum(exp(vpa(dist_i_orient))));
+            
             % Save projections to find gradient and step-size.
 			projections_iter(:, i) = ...
-				vpa((prob_proj/U(i)).*(diff_proj./noise_variance)*...
-                prob_phi*resolution_angle);	
+				prob_i_orient.*(diff_proj./noise_variance);	
 			noisy_iter(:, i) = ...
-				vpa((prob_proj/U(i)).*(ones(size(diff_proj))./noise_variance)*...
-                prob_phi*resolution_angle);
+				prob_i_orient.*(ones(size(diff_proj))./noise_variance);
 		end
 		
 		% Calculate the gradient due to current estimate.
