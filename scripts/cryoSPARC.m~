@@ -253,5 +253,5 @@ figure; plot(error_plot);
 saveas(gcf, strcat(filename, num2str(num_theta), '/error.png'));
 
 % Save the projections which may later be used for refinement.
-save(strcat(filename, num2str(num_theta), '/f_projections.mat'), 'f_projections');
+save(
 
