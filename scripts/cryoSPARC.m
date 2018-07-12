@@ -236,8 +236,8 @@ for q=1:no_of_iterations
 	disp(norm(image_estimate - P));
     
     % Update the number of samples for the next iteration.
-    if norm(image_estimate - P) < 7
-        number_of_samples(q+1) = 100;
+    if norm(image_estimate - P) < 8
+        number_of_samples(q+1) = 120;
     else
         number_of_samples(q+1) = 30;
     end
