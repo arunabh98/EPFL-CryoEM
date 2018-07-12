@@ -14,11 +14,11 @@ filename = ...
 	'../results/cryoSPARC/5_percent_noise/';
 num_theta = 180;
 max_shift_err = 0;
-max_angle_err = 30;
+max_angle_err = 1;
 resolution_angle = 1;
 resolution_space = 1;
 L_pad = 260; 
-no_of_iterations = 10;
+no_of_iterations = 4;
 momentum_parameter = 0.9;
 gamma = 0.9999;
 number_of_samples = zeros(no_of_iterations, 1);
@@ -63,6 +63,7 @@ prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
 std_deviation = 5;
 f_image_estimate = ...
 	std_deviation*randn(f_size*f_size, 1) + i*std_deviation*randn(f_size*f_size, 1);
+f_image_estimate = f_image_estimate.*(norm(f_projections)/norm(f_image_estimate));
 prior_variance = repmat(std_deviation.^2*50, size(f_image_estimate, 1), 1);
 
 % Make the first estimate in the fourier and the spatial domain.
@@ -221,6 +222,7 @@ for q=1:no_of_iterations
 	
 	% Calculate the next estimate.
 	f_image_estimate = f_image_estimate + momentum_gradient;
+    f_image_estimate = f_image_estimate.*(norm(f_projections)/norm(f_image_estimate));
 	f_image_estimate_reshaped = ...
 		reshape(f_image_estimate, [output_size, output_size]);
 	
@@ -252,6 +254,10 @@ end
 figure; plot(error_plot);
 saveas(gcf, strcat(filename, num2str(num_theta), '/error.png'));
 
-% Save the projections which may later be used for refinement.
-save(strcat(filename, num2str(num_theta), '/f_projections.mat'), 'f_projections');
-
+% Save the projections and image which may later be used for refinement.
+save(strcat(filename, num2str(num_theta), '/f_projections.mat'),...
+    'f_projections');
+save(strcat(filename, num2str(num_theta), '/f_image_estimate.mat'),...
+    'f_image_estimate');
+save(strcat(filename, num2str(num_theta), '/noise_estimate.mat'),...
+    'next_noise_estimate');
