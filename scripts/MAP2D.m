@@ -37,7 +37,7 @@ original_projections = projections;
 original_shifts = zeros(size(theta));
 
 % Shift each projection by an unknown amount.
-for i=1:size(projections, 2)
+parfor i=1:size(projections, 2)
     original_shifts(i) = ...
         randi([-max_shift_amplitude, max_shift_amplitude]);
     projections(:, i) = circshift(projections(:, i), original_shifts(i)); 
@@ -67,8 +67,8 @@ disp(norm(min(abs(first_estimate_theta - theta),...
 disp(norm(first_estimate_shifts - original_shifts, 1));
 
 % Begin estimation of the first model.
-max_angle_err = 1;
-max_shift_err = 1;
+max_angle_err = 10;
+max_shift_err = 0;
 prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
 prob_matrix_width = 2*max_shift_err/resolution_space + 1;
 prob_matrix = ...
@@ -77,7 +77,7 @@ prob_matrix = ...
 
 % Start estimating the image.
 fourier_radial = zeros(625, 625);
-for i=1:size(prob_matrix, 1)
+parfor i=1:size(prob_matrix, 1)
     for j=1:size(prob_matrix, 2)
         probabilities = squeeze(prob_matrix(i, j, :))';
         prob_f_proj = bsxfun(@mtimes, f_projections, probabilities);
@@ -92,8 +92,8 @@ for i=1:size(prob_matrix, 1)
                 current_shift);
     end
 end
-max_angle_err = 1;
-max_shift_err = 1;
+max_angle_err = 2;
+max_shift_err = 0;
 
 f_image_estimate = fourier_radial(:);
 first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
@@ -176,16 +176,16 @@ for q=1:no_of_iterations
 
     % Divide the projections with the noise variance.
     denoised_f_projections = ...
-        bsxfun(@rdivide, f_projections, (noise_estimate.^2));
+        bsxfun(@rdivide, f_projections, double(noise_estimate));
     normalization_f_denom = ...
-        bsxfun(@rdivide, ones(size(f_projections)), (noise_estimate.^2));
+        bsxfun(@rdivide, ones(size(f_projections)), double(noise_estimate));
 
     % Initialize the estimates.
     reconstructed_f_numerator = zeros(size(fourier_radial));
     recons_f_denom = zeros(size(fourier_radial));
 
     % Start estimating the image.
-    for i=1:size(prob_matrix, 1)
+    parfor i=1:size(prob_matrix, 1)
         for j=1:size(prob_matrix, 2)
             probabilities = squeeze(prob_matrix(i, j, :))';
             prob_f_proj = bsxfun(@mtimes, denoised_f_projections, probabilities);
@@ -215,6 +215,8 @@ for q=1:no_of_iterations
         weights./cconv((recons_f_denom_prior.*weights), w, size(f_image_estimate, 1));
     reconstructed_f_image = ...
         reconstructed_f_numerator.*recons_f_denom_weighted*1e4;
+    reconstructed_f_image = ...
+        reconstructed_f_image*norm(fourier_radial)/norm(reconstructed_f_image);
     reconstructed_f_image = ...
         reshape(reconstructed_f_image, [output_size, output_size]);
 
