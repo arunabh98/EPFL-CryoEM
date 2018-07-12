@@ -1,7 +1,7 @@
 function [prob, dist_matrix, prior_matrix] = denom_posterior_probability_orientation(...
     f_proj, f_image,...
     estimated_orientation, first_orientation, projection_parameters,... 
-    sigmaNoise, prior_parameters, num_projections)
+    sigmaNoise, prior_parameters)
     
     % Define the constants.
     max_angle_err = prior_parameters.max_angle_err;
@@ -14,9 +14,9 @@ function [prob, dist_matrix, prior_matrix] = denom_posterior_probability_orienta
     
     % Initialize the dist matrix and the prior matrix.
     dist_matrix = ...
-        zeros(prob_matrix_height, prob_matrix_width, num_projections);
+        zeros(prob_matrix_height, prob_matrix_width);
     prior_matrix = ...
-        zeros(prob_matrix_height, prob_matrix_width, num_projections);
+        zeros(prob_matrix_height, prob_matrix_width);
     
     for i=-max_angle_err:resolution_angle:max_angle_err
         for j=-max_shift_err:resolution_space:max_shift_err

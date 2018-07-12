@@ -13,7 +13,7 @@ function noise_estimate = average_reconstruction_error(f_image_estimate,...
     U = zeros(size(f_projections, 2), 1);
     U_dist = ...
         zeros(size(f_projections, 2), (2*max_angle_err)/resolution_angle + 1);
-    for i=1:size(f_projections, 2)
+    parfor i=1:size(f_projections, 2)
         f_proj = f_projections(:, i);
         % The orientation specified for this iteration.
         estimated_orientation = Orientation(theta_estimate(i), 0);
@@ -29,7 +29,7 @@ function noise_estimate = average_reconstruction_error(f_image_estimate,...
     % Initialize noise estimate.
     noise_estimate = zeros(projection_length, size(f_projections, 2));     
     for j=-max_angle_err:resolution_angle:max_angle_err
-        for k=1:size(f_projections, 2)
+        parfor k=1:size(f_projections, 2)
             % Calculate the projection.
             c_proj = project_fourier_alternate(fourier_radial,...
                 theta_estimate(k) + j, shift_estimate(k),...

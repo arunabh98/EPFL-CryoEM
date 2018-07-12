@@ -31,7 +31,7 @@ function projection = project_fourier_alternate(fourier_radial, probe_angle, shi
 
 	projection = zeros(proj_length, 1);
 
-	for i=1:proj_length
+	parfor i=1:proj_length
 		projection(i) = fourier_radial(probe_y(i), probe_x(i));
 	end
 

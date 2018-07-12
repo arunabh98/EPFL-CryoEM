@@ -114,7 +114,7 @@ for q=1:no_of_iterations
 	w_hat_q = 1*(gamma^q);
 	sigma_bar = 1/(sigmaNoise.^2)*3100;
 	sigmaHat = 1*sigma_bar;
-	for i=1:q
+	parfor i=1:q
 		w_q = w_q +...
             ones(size(noise_estimate, 1), 1).*gamma^(q-i)*number_of_samples(i);
 		sigma_bar_q = sigma_bar_q + noise_estimate(:, i).*gamma^(q-i);
@@ -139,7 +139,7 @@ for q=1:no_of_iterations
     U_dist = ...
         zeros(size(sel_projections, 2),...
         (2*max_angle_err)/resolution_angle + 1);
-    for i=1:size(sel_projections, 2)
+    parfor i=1:size(sel_projections, 2)
         % The orientation specified for this iteration.
         estimated_orientation = Orientation(selected_angles(i), 0);
         
@@ -151,7 +151,7 @@ for q=1:no_of_iterations
         U_dist(i, :) = dist_vector;
     end
 
-	for j=-max_angle_err:resolution_angle:max_angle_err
+	parfor j=-max_angle_err:resolution_angle:max_angle_err
         
 		thetas_iter = selected_angles  + j;
 		projections_iter = zeros(size(sel_projections));
@@ -236,7 +236,7 @@ for q=1:no_of_iterations
 	disp(norm(image_estimate - P));
     
     % Update the number of samples for the next iteration.
-    if norm(image_estimate - P) < 10
+    if norm(image_estimate - P) < 7
         number_of_samples(q+1) = 100;
     else
         number_of_samples(q+1) = 30;
