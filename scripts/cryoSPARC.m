@@ -14,7 +14,7 @@ filename = ...
 	'../results/cryoSPARC/5_percent_noise/';
 num_theta = 180;
 max_shift_err = 0;
-max_angle_err = 5;
+max_angle_err = 89;
 resolution_angle = 1;
 resolution_space = 1;
 L_pad = 260; 
@@ -22,7 +22,7 @@ no_of_iterations = 15;
 momentum_parameter = 0.9;
 gamma = 0.9999;
 number_of_samples = zeros(no_of_iterations, 1);
-number_of_samples(1) = 30;
+number_of_samples(1) = 60;
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -212,7 +212,7 @@ for q=1:no_of_iterations
 		prior_gradient;
 	
 	% Calculate the step size.
-	step_size = 1/max(noisy_step_vector_iter);
+	step_size = 0.01/max(noisy_step_vector_iter);
 	
 	% Gradient with momentum.
 	momentum_gradient = ...
@@ -238,9 +238,9 @@ for q=1:no_of_iterations
     
     % Update the number of samples for the next iteration.
     if norm(image_estimate - P) < 8
-        number_of_samples(q+1) = 120;
+        number_of_samples(q+1) = 60;
     else
-        number_of_samples(q+1) = 30;
+        number_of_samples(q+1) = 60;
     end
     
     % Save the model and the image in the current iteration.
