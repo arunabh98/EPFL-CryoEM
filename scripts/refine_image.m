@@ -1,16 +1,26 @@
+digits(100);
+% Get the image.
+P = phantom(200);
+
+% Reduce the size of the image for speed.
+P = imresize(P, 0.5);
+
+% Pad the image with a fixed boundary of 3 pixels.
+P = padarray(P, [3, 3], 0.0);
+
 % Constants
 filename = ...
     '../results/refine_image/5_percent_noise/';
 num_theta = 180;
 resolution_angle = 1;
 resolution_space = 1;
-no_of_iterations = 3;
-max_angle_error = 3;
-max_shift_error = 0;
-mask=ones(size(P));
-n = size(P, 1);
+no_of_iterations = 10;
+max_angle_err = 1;
+max_shift_err = 0;
 L_pad = 260; 
 output_size = 625;
+num_projections = num_theta;
+theta = 0:1:179;
 
 % Load the projections and initial estimate of image.
 saved_filename = ...
@@ -27,7 +37,7 @@ saved_noise_estimate = ...
 
 f_projections = saved_projections.f_projections;
 f_image_estimate = saved_image_estimate.f_image_estimate;
-first_noise_estimate = saved_noise_estimate.noise_estimate;
+noise_estimate = saved_noise_estimate.next_noise_estimate;
 fourier_radial = reshape(f_image_estimate, [output_size, output_size]);
 
 % Things to write in the observation file.
@@ -37,13 +47,14 @@ theta_to_write = zeros(10, num_theta);
 % certain limit.
 first_estimate_theta = assign_angles_to_projections(...
     f_projections, f_image_estimate, size(f_projections, 1), output_size);
+first_estimate_theta = 0:1:179;
 first_estimate_shifts = zeros(1, num_theta);
+original_shifts = zeros(1, num_theta);
 
 % Display the error between the first estimate orientations and the
 % correct orientation.
 disp(norm(min(abs(first_estimate_theta - theta),...
     180 - abs(first_estimate_theta - theta)), 1));
-disp(norm(first_estimate_shifts - original_shifts, 1));
 
 % The first image.
 first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
@@ -66,10 +77,6 @@ disp(norm(first_estimate_model - P));
 imwrite(first_estimate_model, strcat(filename, num2str(num_theta),...
     '/first_estimate.png'));
 
-% Initialize parameters needed for searching in the space.
-prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
-    resolution_angle, resolution_space);
-
 % Calculate the variance of the prior gaussian distribution.
 prior_variance = 20*abs(f_image_estimate).^2;
 prior_variance = mean(prior_variance(:));
@@ -84,7 +91,8 @@ weights = ones(size(f_image_estimate));
 error_plot(1) = norm(first_estimate_model - P);
 for q=1:no_of_iterations
     % The maximum error in angles for this iteration.
-    max_angle_err = max(1, max_angle_err - 0.5);
+%     max_angle_err = max(1, max_angle_err - 10);
+%     resolution_angle = max(1, resolution_angle - 2);
 
     % Initialize parameters needed for searching in the space.
     prior_parameters = PriorParameters(max_angle_err, max_shift_err,...
