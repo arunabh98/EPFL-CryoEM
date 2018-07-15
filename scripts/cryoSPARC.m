@@ -14,7 +14,7 @@ filename = ...
 	'../results/cryoSPARC/5_percent_noise/';
 num_theta = 180;
 max_shift_err = 0;
-max_angle_err = 89;
+max_angle_err = 30;
 resolution_angle = 1;
 resolution_space = 1;
 L_pad = 260; 
