@@ -7,7 +7,7 @@ function first_theta_estimate = assign_angles_to_projections(...
     
     parfor i=1:size(f_projections, 2)
         min_dist = inf;
-        for j=0:1:179
+        for j=0:0.2:179.8
             estimated_projection = project_fourier_alternate(...
 				f_image_reshaped, j, 0, projection_length);
             
