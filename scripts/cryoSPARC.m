@@ -14,11 +14,11 @@ filename = ...
 	'../results/cryoSPARC/5_percent_noise/';
 num_theta = 180;
 max_shift_err = 0;
-max_angle_err = 30;
+max_angle_err = 89;
 resolution_angle = 1;
 resolution_space = 1;
 L_pad = 260; 
-no_of_iterations = 15;
+no_of_iterations = 30;
 momentum_parameter = 0.9;
 gamma = 0.9999;
 number_of_samples = zeros(no_of_iterations, 1);
