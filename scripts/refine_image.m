@@ -37,8 +37,27 @@ saved_noise_estimate = ...
 
 f_projections = saved_projections.f_projections;
 f_image_estimate = saved_image_estimate.f_image_estimate;
-noise_estimate = saved_noise_estimate.next_noise_estimate;
+f_image_estimate = ...
+    f_image_estimate*(norm(f_projections)/norm(f_image_estimate));
+noise_estimate = ones(size(f_projections, 1), 1);
 fourier_radial = reshape(f_image_estimate, [output_size, output_size]);
+
+% Low pass the image in the fourier domain.
+[N, M] = size(fourier_radial);
+%Sampling intervals 
+dx = 1; 
+dy = 1; 
+%Characteristic wavelengths 
+KX0 = (mod(1/2 + (0:(M-1))/M, 1) - 1/2); 
+KX1 = KX0 * (2*pi/dx); 
+KY0 = (mod(1/2 + (0:(N-1))/N, 1) - 1/2); 
+KY1 = KY0 * (2*pi/dx); 
+[KX,KY] = meshgrid(KX1,KY1); 
+%Filter formulation 
+K0 = 4;
+lpf = ~(KX.*KX + KY.*KY < K0^2);
+fourier_radial = fourier_radial.*lpf;
+f_image_estimate = fourier_radial(:);
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -163,10 +182,7 @@ for q=1:no_of_iterations
     w = kaiser(size(f_image_estimate, 1), 20);
     recons_f_denom_weighted = ...
         weights./cconv((recons_f_denom_prior.*weights), w, size(f_image_estimate, 1));
-    reconstructed_f_image = ...
-        reconstructed_f_numerator.*recons_f_denom_weighted*1e4;
-    reconstructed_f_image = ...
-        reconstructed_f_image*norm(fourier_radial)/norm(reconstructed_f_image);
+    reconstructed_f_image = reconstructed_f_numerator;
     reconstructed_f_image = ...
         reshape(reconstructed_f_image, [output_size, output_size]);
 
@@ -186,9 +202,7 @@ for q=1:no_of_iterations
     weights = recons_f_denom_weighted;
 
     % next noise estimate.
-    noise_estimate = average_reconstruction_error(reconstructed_f_image,...
-        f_projections, first_estimate_theta, first_estimate_shifts,...
-        projection_parameters, prior_parameters, noise_estimate);
+    noise_estimate = ones(size(f_projections, 1), 1);
     
     % Next estimate.
     f_image_estimate = reconstructed_f_image(:);

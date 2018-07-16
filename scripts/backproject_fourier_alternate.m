@@ -47,7 +47,9 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
 	[prj_angles, prj_sort] = sort(prj_angles);
 	f_p = f_p(:, prj_sort);
 	[unique_angles, unique_indices] = unique(prj_angles);
-
+    
+    % Change the orientations such that no two projections have the same
+    % orientation.
 	for i=2:size(unique_indices, 1) - 1
 		same_projections = f_p(:, unique_indices(i):unique_indices(i+1) - 1);
 		prev_projection_distance_matrix =...
@@ -77,8 +79,9 @@ function fourier_radial=backproject_fourier_alternate(f_p, prj_angles, shifts)
             end
             prj_angles(:, unique_indices(i):unique_indices(i+1) - 1) = corr_angles;
         end
-	end
-
+    end
+    
+    % Backproject the projections.
 	probe_theta = prj_angles*pi/180;
 	[probe_theta_grid, probe_omega_grid] = meshgrid(probe_theta, omega_sino); 
 	[probe_x, probe_y] = pol2cart(probe_theta_grid, probe_omega_grid);
