@@ -12,10 +12,10 @@ P = padarray(P, [3, 3], 0.0);
 filename = ...
     '../results/refine_image/5_percent_noise/';
 num_theta = 180;
-resolution_angle = 20;
+resolution_angle = 2;
 resolution_space = 1;
-no_of_iterations = 25;
-max_angle_err = 100;
+no_of_iterations = 10;
+max_angle_err = 10;
 max_shift_err = 0;
 L_pad = 260; 
 output_size = 625;
@@ -37,8 +37,6 @@ saved_noise_estimate = ...
 
 f_projections = saved_projections.f_projections;
 f_image_estimate = saved_image_estimate.f_image_estimate;
-f_image_estimate = ...
-    f_image_estimate*(norm(f_projections)/norm(f_image_estimate));
 noise_estimate = ones(size(f_projections, 1), 1);
 fourier_radial = reshape(f_image_estimate, [output_size, output_size]);
 
@@ -54,10 +52,17 @@ KY0 = (mod(1/2 + (0:(N-1))/N, 1) - 1/2);
 KY1 = KY0 * (2*pi/dx); 
 [KX,KY] = meshgrid(KX1,KY1); 
 %Filter formulation 
-K0 = 4;
+K0 = 3.3;
 lpf = ~(KX.*KX + KY.*KY < K0^2);
 fourier_radial = fourier_radial.*lpf;
 f_image_estimate = fourier_radial(:);
+
+% The first image.
+first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
+
+% Show the first estimate image.
+figure; imshow(first_estimate_model, []);
+disp(norm(first_estimate_model - P));
 
 % Things to write in the observation file.
 theta_to_write = zeros(10, num_theta);
@@ -66,17 +71,15 @@ theta_to_write = zeros(10, num_theta);
 % certain limit.
 first_estimate_theta = assign_angles_to_projections(...
     f_projections, f_image_estimate, size(f_projections, 1), output_size);
-% first_estimate_theta = 0:1:179;
-first_estimate_shifts = zeros(1, num_theta);
-original_shifts = zeros(1, num_theta);
 
 % Display the error between the first estimate orientations and the
 % correct orientation.
 disp(norm(min(abs(first_estimate_theta - theta),...
     180 - abs(first_estimate_theta - theta)), 1));
 
-% The first image.
-first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
+% Zero shift
+first_estimate_shifts = zeros(1, num_theta);
+original_shifts = zeros(1, num_theta);
 
 % Projection and image constants.
 output_size = max(size(fourier_radial));
@@ -87,10 +90,6 @@ projection_length = size(f_projections, 1);
 % Initialize projection parameters object.
 projection_parameters = ...
     ProjectionParameters(width, height, output_size, projection_length);
-
-% Show the first estimate image.
-figure; imshow(first_estimate_model, []);
-disp(norm(first_estimate_model - P));
 
 % Save the first model.
 imwrite(first_estimate_model, strcat(filename, num2str(num_theta),...
@@ -110,7 +109,7 @@ weights = ones(size(f_image_estimate));
 error_plot(1) = norm(first_estimate_model - P);
 for q=1:no_of_iterations
     % The maximum error in angles for this iteration.
-    max_angle_err = max(1, max_angle_err - 5);
+    max_angle_err = max(1, max_angle_err - 2);
     resolution_angle = max(1, resolution_angle - 1);
 
     % Initialize parameters needed for searching in the space.
