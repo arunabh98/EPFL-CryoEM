@@ -14,7 +14,7 @@ filename = ...
 	'../results/cryoSPARC/5_percent_noise/';
 num_theta = 180;
 max_shift_err = 0;
-max_angle_err = 89;
+max_angle_err = 30;
 resolution_angle = 1;
 resolution_space = 1;
 L_pad = 260; 
@@ -212,7 +212,15 @@ for q=1:no_of_iterations
 		prior_gradient;
 	
 	% Calculate the step size.
-	step_size = 0.01/max(noisy_step_vector_iter);
+    if q < 5
+        step_size = 0.1/max(noisy_step_vector_iter);
+    elseif q < 10
+        step_size = 0.01/max(noisy_step_vector_iter);
+    elseif q < 13
+        step_size = 0.001/max(noisy_step_vector_iter);
+    elseif q < 15
+        step_size = 0.0005/max(noisy_step_vector_iter);
+    end
 	
 	% Gradient with momentum.
 	momentum_gradient = ...
