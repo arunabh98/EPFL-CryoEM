@@ -80,7 +80,7 @@ first_estimate_shifts = zeros(1, num_theta);
 original_shifts = zeros(1, num_theta);
 
 % Begin estimation of the first model.
-max_angle_err = 30;
+max_angle_err = 20;
 max_shift_err = 0;
 prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
 prob_matrix_width = 2*max_shift_err/resolution_space + 1;
