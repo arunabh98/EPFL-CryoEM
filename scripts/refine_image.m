@@ -12,7 +12,9 @@ P = padarray(P, [3, 3], 0.0);
 filename = ...
     '../results/refine_image/5_percent_noise/';
 num_theta = 180;
-resolution_angle = 5;
+max_angle_err = 20;
+max_shift_err = 0;
+resolution_angle = 4;
 resolution_space = 1;
 no_of_iterations = 10;
 L_pad = 260; 
@@ -20,9 +22,12 @@ output_size = 625;
 num_projections = num_theta;
 theta = 0:1:179;
 
+noisy_theta = mod(theta +...
+    randi([-max_angle_err, max_angle_err], 1, num_theta), 180);
+
 % Load the projections and initial estimate of image.
 saved_filename = ...
-    '../results/cryoSPARC/5_percent_noise/';
+    '../results/cryoSPARC/5_percent_noise/office/';
 saved_projections = ...
     matfile(strcat(saved_filename, num2str(num_projections),...
     '/f_projections.mat'));
@@ -50,7 +55,7 @@ KY0 = (mod(1/2 + (0:(N-1))/N, 1) - 1/2);
 KY1 = KY0 * (2*pi/dx); 
 [KX,KY] = meshgrid(KX1,KY1); 
 %Filter formulation 
-K0 = 3.3;
+K0 = 3.5;
 lpf = ~(KX.*KX + KY.*KY < K0^2);
 fourier_radial = fourier_radial.*lpf;
 f_image_estimate = fourier_radial(:);
@@ -68,7 +73,8 @@ theta_to_write = zeros(10, num_theta);
 % In the first case the angles and shifts will be unknown upto a 
 % certain limit.
 first_estimate_theta = assign_angles_to_projections(...
-    f_projections, f_image_estimate, size(f_projections, 1), output_size);
+    f_projections, f_image_estimate, size(f_projections, 1), output_size,...
+    max_angle_err, resolution_angle, noisy_theta);
 
 % Display the error between the first estimate orientations and the
 % correct orientation.
@@ -80,8 +86,6 @@ first_estimate_shifts = zeros(1, num_theta);
 original_shifts = zeros(1, num_theta);
 
 % Begin estimation of the first model.
-max_angle_err = 20;
-max_shift_err = 0;
 prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
 prob_matrix_width = 2*max_shift_err/resolution_space + 1;
 prob_matrix = ...
