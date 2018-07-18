@@ -12,11 +12,9 @@ P = padarray(P, [3, 3], 0.0);
 filename = ...
     '../results/refine_image/5_percent_noise/';
 num_theta = 180;
-resolution_angle = 2;
+resolution_angle = 5;
 resolution_space = 1;
 no_of_iterations = 10;
-max_angle_err = 10;
-max_shift_err = 0;
 L_pad = 260; 
 output_size = 625;
 num_projections = num_theta;
@@ -81,6 +79,40 @@ disp(norm(min(abs(first_estimate_theta - theta),...
 first_estimate_shifts = zeros(1, num_theta);
 original_shifts = zeros(1, num_theta);
 
+% Begin estimation of the first model.
+max_angle_err = 30;
+max_shift_err = 0;
+prob_matrix_height = (2*max_angle_err)/resolution_angle + 1;
+prob_matrix_width = 2*max_shift_err/resolution_space + 1;
+prob_matrix = ...
+    zeros(prob_matrix_height, prob_matrix_width,...
+        size(f_projections, 2)) + 1/(prob_matrix_height*prob_matrix_width);
+
+% Start estimating the image.
+fourier_radial = zeros(625, 625);
+parfor i=1:size(prob_matrix, 1)
+    for j=1:size(prob_matrix, 2)
+        probabilities = squeeze(prob_matrix(i, j, :))';
+        prob_f_proj = bsxfun(@mtimes, f_projections, probabilities);
+
+        current_theta = mod(first_estimate_theta  + i*resolution_angle...
+            - resolution_angle - max_angle_err, 180);
+        current_shift = first_estimate_shifts  + j*resolution_space...
+            - resolution_space - max_shift_err;
+
+        fourier_radial = fourier_radial +...
+            backproject_fourier_alternate(prob_f_proj, current_theta,...
+                current_shift);
+    end
+end
+
+f_image_estimate = fourier_radial(:);
+first_estimate_model = Ifft2_2_Img(fourier_radial, L_pad);
+
+% Show the first estimate image.
+figure; imshow(first_estimate_model, []);
+disp(norm(first_estimate_model - P));
+
 % Projection and image constants.
 output_size = max(size(fourier_radial));
 height = size(fourier_radial, 1);
@@ -109,7 +141,7 @@ weights = ones(size(f_image_estimate));
 error_plot(1) = norm(first_estimate_model - P);
 for q=1:no_of_iterations
     % The maximum error in angles for this iteration.
-    max_angle_err = max(1, max_angle_err - 2);
+    max_angle_err = max(1, max_angle_err - 5);
     resolution_angle = max(1, resolution_angle - 1);
 
     % Initialize parameters needed for searching in the space.
