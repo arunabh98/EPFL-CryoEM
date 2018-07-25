@@ -12,11 +12,11 @@ P = padarray(P, [3, 3], 0.0);
 filename = ...
     '../results/refine_image/5_percent_noise/';
 num_theta = 180;
-max_angle_err = 20;
+max_angle_err = 100;
 max_shift_err = 0;
-resolution_angle = 4;
+resolution_angle = 10;
 resolution_space = 1;
-no_of_iterations = 10;
+no_of_iterations = 12;
 L_pad = 260; 
 output_size = 625;
 num_projections = num_theta;
@@ -145,7 +145,7 @@ weights = ones(size(f_image_estimate));
 error_plot(1) = norm(first_estimate_model - P);
 for q=1:no_of_iterations
     % The maximum error in angles for this iteration.
-    max_angle_err = max(1, max_angle_err - 5);
+    max_angle_err = max(1, max_angle_err - 10);
     resolution_angle = max(1, resolution_angle - 1);
 
     % Initialize parameters needed for searching in the space.
