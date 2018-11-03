@@ -1,4 +1,4 @@
-# EPFL-CryoEM
+# Research Internship at EPFL
 
 This repository contains the implementation of two leading software in Cryo-EM - [Relion](https://www.sciencedirect.com/science/article/pii/S1047847712002481#s0085) and [CryoSPARC](https://www.nature.com/articles/nmeth.4169) in 2-D. We frame the entire problem in a Bayesian framework. In particular, the reconstruction problem is formulated as finding the model that has the highest probability of being the correct one in the light of both the observed data and available prior information. We optimize it using stochastic gradient descent to arrive at an initial estimate followed by an expected maximization algorithm to refine the model.  
 
@@ -11,6 +11,9 @@ The CryoSPARC algorithm resides in [scripts/cryoSPARC.m](https://github.com/Arun
 The RELION algorithm resides in [scripts/MAP2D.m](https://github.com/Arunabh98/EPFL-CryoEM/blob/master/scripts/MAP2D.m) which, from the projections of the image, correctly estimates the orientation of each of those projections and then reconstructs the image using the formulae derived in the expectation maximization algorithm.
 
 The back-projection and the projection algorithms algortihms have been implemented in [scripts/backproject_fourier_alternate.m](https://github.com/Arunabh98/EPFL-CryoEM/blob/master/scripts/backproject_fourier_alternate.m) and [scripts/project_fourier_alternate.m](https://github.com/Arunabh98/EPFL-CryoEM/blob/master/scripts/project_fourier_alternate.m). The probability of each projection having a particular orientation is calculated by [scripts/calc_prob_for_each_orientation.m](https://github.com/Arunabh98/EPFL-CryoEM/blob/master/scripts/calc_prob_for_each_orientation.m).
+
+## Report
+For a more detailed overview please refer to this comprehensive review over [here](https://arunabh98.github.io/reports/epfl_report.pdf).
 
 ## Credits
 This work would not have been possible without the guidance of professor [Victor Panaretos](http://smat.epfl.ch/victor/) and the resources provided to me by [EPFL](https://www.epfl.ch/). Also, some of the references used in this work are -
